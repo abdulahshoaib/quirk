@@ -42,8 +42,3 @@ Primary backend language
 **Docker**
 
 Automated deployment through Docker containers
-
-
-## API Endpoints
-
---TO DO--
