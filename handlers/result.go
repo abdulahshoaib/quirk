@@ -5,6 +5,30 @@ import (
 	"net/http"
 )
 
+// HandleResult returns the processed embeddings and knowledge triples
+// for a given object ID, if the job has been completed.
+//
+// GET /result?object_id={id}
+//
+// Query Parameters:
+//   - object_id (required): Unique identifier for the processing job
+//
+// Response Codes:
+//   - 200 OK: Job completed; returns JSON with embeddings and triples
+//   - 202 Accepted: Job is still in progress or incomplete
+//   - 400 Bad Request: Missing object_id
+//   - 404 Not Found: Unknown or invalid object_id
+//
+// Example JSON Response:
+//
+//	{
+//	  "embeddings": [
+//	    { "text": "Some text", "vector": [0.12, 0.98, ...] }
+//	  ],
+//	  "triples": [
+//	    { "subject": "Earth", "predicate": "is", "object": "planet" }
+//	  ]
+//	}
 func HandleResult(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("object_id")
 	if id == "" {
