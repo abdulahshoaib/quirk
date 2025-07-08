@@ -70,16 +70,20 @@ func Convertdatatype(str [][]string) [][]interface{} {
 
 	return result
 }
+func printCSV(csvrecords [][]interface{}) {
 
-func main() {
-	csvrecords, err := readCsvFile("data.csv")
-	if err != nil {
-		log.Fatal(err)
-	}
 	fmt.Println("CSV Data:")
 	for _, row := range csvrecords {
 		fmt.Println(row)
 	}
 	fmt.Println()
-
 }
+
+// func main() {
+// 	csvrecords, err := readCsvFile("data.csv")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	printCSV(csvrecords)
+
+// }
