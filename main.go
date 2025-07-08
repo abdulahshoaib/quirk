@@ -1,11 +1,8 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/abdulahshoaib/quirk/handlers"
 	"github.com/abdulahshoaib/quirk/middleware"
@@ -49,7 +46,6 @@ func main() {
 //	mux.HandleFunc("/export", middleware.Logging(middleware.Auth(handlers.HandleExport)))
 
 	// mux.HandleFunc("/signup", middleware.Logging(handlers.HandleSignUp))
-
 	log.Print("serving on :8080")
 	http.ListenAndServe(":8080", mux)
 }

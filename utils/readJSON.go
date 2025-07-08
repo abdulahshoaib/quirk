@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"encoding/json"
@@ -34,11 +34,11 @@ func printJSONRecords(records []map[string]interface{}) {
 	}
 }
 
-func main() {
+// func main() {
 
-	jsonrecords, err := readJsonFile("data.json")
-	if err != nil {
-		log.Fatal(err)
-	}
-	printJSONRecords(jsonrecords)
-}
+// 	jsonrecords, err := readJsonFile("data.json")
+// 	if err != nil {
+// 		log.Fatal(err)
+// 	}
+// 	printJSONRecords(jsonrecords)
+// }
