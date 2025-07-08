@@ -9,6 +9,8 @@ import (
 
 	"github.com/abdulahshoaib/quirk/handlers"
 	"github.com/abdulahshoaib/quirk/middleware"
+	_ "github.com/joho/godotenv/autoload"
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -20,6 +22,8 @@ func main() {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
 	)
+
+	log.Println("DSN =", dsn)
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -34,20 +38,17 @@ func main() {
 
 	mux := http.NewServeMux()
 
-<<<<<<< HEAD
-	mux.HandleFunc("/process", middleware.Logging(middleware.Auth(handlers.HandleProcess)))
-	mux.HandleFunc("/status", middleware.Logging(middleware.Auth(handlers.HandleStatus)))
-	mux.HandleFunc("/result", middleware.Logging(middleware.Auth(handlers.HandleResult)))
-	mux.HandleFunc("/export", middleware.Logging(middleware.Auth(handlers.HandleExport)))
+	mux.HandleFunc("/process", middleware.Logging((handlers.HandleProcess)))
+	mux.HandleFunc("/status", middleware.Logging((handlers.HandleStatus)))
+	mux.HandleFunc("/result", middleware.Logging((handlers.HandleResult)))
+	mux.HandleFunc("/export", middleware.Logging((handlers.HandleExport)))
+
+//	mux.HandleFunc("/process", middleware.Logging(middleware.Auth(handlers.HandleProcess)))
+//	mux.HandleFunc("/status", middleware.Logging(middleware.Auth(handlers.HandleStatus)))
+//	mux.HandleFunc("/result", middleware.Logging(middleware.Auth(handlers.HandleResult)))
+//	mux.HandleFunc("/export", middleware.Logging(middleware.Auth(handlers.HandleExport)))
 
 	// mux.HandleFunc("/signup", middleware.Logging(handlers.HandleSignUp))
-=======
-	mux.HandleFunc("/process", middleware.Logging(handlers.HandleProcess))
-	mux.HandleFunc("/status", middleware.Logging(handlers.HandleStatus))
-	mux.HandleFunc("/result", middleware.Logging(handlers.HandleResult))
-	mux.HandleFunc("/export", middleware.Logging(handlers.HandleExport))
-	mux.HandleFunc("/signup", middleware.Logging(handlers.HandleLogin))
->>>>>>> 665f30f (feat: added signup handling)
 
 	log.Print("serving on :8080")
 	http.ListenAndServe(":8080", mux)
