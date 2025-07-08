@@ -12,7 +12,37 @@ import (
 	"github.com/google/uuid"
 )
 
-// POST /process -> Upload files + start conversion → returns a unique object_id
+// HandleProcess handles the uploading of multiple files, starts asynchronous
+// processing using the embedding model, and returns a unique object ID.
+//
+// POST /process
+//
+// Description:
+//   - Accepts multipart form uploads under the field "files".
+//   - Reads all uploaded files into memory.
+//   - Triggers asynchronous processing for embeddings and triples.
+//   - Tracks job status using an internal job ID.
+//
+// Request:
+//   - Content-Type: multipart/form-data
+//   - Form Field: files (one or more files)
+//
+// Returns:
+//   - 200: JSON object with { "object_id": string }
+//   - 400: If no files are uploaded or request is malformed
+//   - 405: If method is not POST
+//
+// Example:
+//   POST /process
+//   Form field "files": [file1.txt, file2.txt]
+//
+// Response:
+//   { "object_id": "e45c1c20-b7a1-4d65-b7e1-a9fa73c0e217" }
+//
+// The returned object ID can be used to:
+//   - Check status via /status?object_id=...
+//   - Get results via /results?object_id=...
+//   - Export results via /export?object_id=...&format=csv|json
 func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "[POST] allowed", http.StatusMethodNotAllowed)
