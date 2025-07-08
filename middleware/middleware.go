@@ -12,6 +12,12 @@ func InitDB(database *sql.DB) {
 	db = database
 }
 
+// Auth authenticates incoming HTTP requests
+// using a bearer token in the Authorization header
+//
+//   - Error: responds with HTTP 401 Unauthorized
+//
+// This middleware requires the database connection to be initialized via InitDB.
 func Auth(nx http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
