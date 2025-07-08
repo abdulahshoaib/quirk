@@ -60,7 +60,8 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	}
 	mutex.Unlock()
 
-	go pipeline.ProcessFiles(object_id, memFiles, func(id string, embs, trips []string) {
+	// asynchronusly writes back whenever the embeddings are created
+	go pipeline.ProcessFiles(object_id, memFiles, func(id string, embs[][]float64, trips []string) {
 		mutex.Lock()
 		jobResults[id] = Result{
 			Embeddings: embs,
@@ -76,5 +77,4 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"object_id": object_id})
-
 }

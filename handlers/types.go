@@ -9,6 +9,6 @@ type JobStatus struct {
 }
 
 type Result struct {
-	Embeddings []string
+	Embeddings [][]float64
 	Triples    []string
 }
