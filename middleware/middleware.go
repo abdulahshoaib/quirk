@@ -1,18 +1,40 @@
 package middleware
 
 import (
+	"database/sql"
 	"net/http"
-	"log"
+	"strings"
 )
 
-// fn logging(fn http.HandlerFunc) http.HandlerFunc
-//
-// Takes in the Handler Function for a route and logs
-// the route when hit
-func Logging(fn http.HandlerFunc) http.HandlerFunc{
-	return func (w http.ResponseWriter, r *http.Request)  {
-		log.Println(r.URL.Path)
-		fn(w, r)
-	}
+var db *sql.DB
+
+func InitDB(database *sql.DB) {
+	db = database
 }
 
+func Auth(nx http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if !strings.HasPrefix(authHeader, "Bearer ") {
+			http.Error(w, "Missing or invalid Authorization Header", http.StatusUnauthorized)
+			return
+		}
+
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		token = strings.TrimSpace(token)
+
+		if token == "" {
+			http.Error(w, "Empty bearer token", http.StatusUnauthorized)
+			return
+		}
+
+		var exists bool
+		err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM api_tokens WHERE token = $1)", token).Scan(&exists)
+		if err != nil || !exists {
+			http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
+			return
+		}
+
+		nx(w, r)
+	}
+}
