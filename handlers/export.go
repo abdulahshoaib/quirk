@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"net/http"
+	"strconv"
 )
 
 // HandleExport returns the embeddings and triples in CSV or JSON format
@@ -45,6 +46,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 
 	case "csv":
 		w.Header().Set("Content-Type", "text/csv")
+		w.Header().Set("Content-Disposition", "attachment; filename=result.csv")
 		writer := csv.NewWriter(w)
 		writer.Write([]string{"Embeddings", "Triple"})
 		for i := range result.Embeddings {
@@ -52,13 +54,15 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 			if i < len(result.Triples) {
 				triple = result.Triples[i]
 			}
-			writer.Write([]string{result.Embeddings[i], triple})
+			row := append(embeddingsToString(result.Embeddings[i]), triple)
+			writer.Write(row)
 		}
 		writer.Flush()
 		return
 
 	case "json":
 		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Content-Disposition", "attachment; filename=result.json")
 		json.NewEncoder(w).Encode(result)
 		return
 
@@ -66,4 +70,12 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Format unrecognized", http.StatusBadRequest)
 		return
 	}
+}
+
+func embeddingsToString(floats []float64) []string {
+	out := make([]string, len(floats))
+	for i, f := range floats {
+		out[i] = strconv.FormatFloat(f, 'f', -1, 64)
+	}
+	return out
 }
