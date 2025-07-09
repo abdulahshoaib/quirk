@@ -1,10 +1,6 @@
 package handlers
 
-import (
-	"time"
-
-	"github.com/golang-jwt/jwt/v5"
-)
+import "time"
 
 type JobStatus struct {
 	Status string
