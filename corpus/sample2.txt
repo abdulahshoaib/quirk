@@ -1,0 +1,3 @@
+In the world of artificial intelligence, models are trained on large datasets.
+However, not all data is equal — quality matters more than quantity.
+Stop words like “the”, “and”, and “but” are often filtered.
