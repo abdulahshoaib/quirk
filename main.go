@@ -23,7 +23,7 @@ func main() {
 		os.Getenv("DB_NAME"),
 	)
 
-	log.Println("DSN =", dsn)
+	log.Println("connected to DB")
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
