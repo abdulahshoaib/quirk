@@ -23,7 +23,7 @@ func main() {
 		os.Getenv("DB_NAME"),
 	)
 
-	log.Println("DSN =", dsn)
+	log.Println("connected to DB")
 
 	Db, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -39,27 +39,36 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/login", middleware.Logging((handlers.HandleLogin)))
+	mux.HandleFunc("/login", middleware.Logging((handlers.HandleSignup)))
 	mux.HandleFunc("/process", middleware.Logging((handlers.HandleProcess)))
 	mux.HandleFunc("/status", middleware.Logging((handlers.HandleStatus)))
 	mux.HandleFunc("/result", middleware.Logging((handlers.HandleResult)))
 	mux.HandleFunc("/export", middleware.Logging((handlers.HandleExport)))
+	mux.HandleFunc("/signup", middleware.Logging(handlers.HandleSignup))
 
-	mux.HandleFunc("/protected", handlers.AuthenticateJWT(handleProtectedRoute))
+	// following command was used to check authentication
+	// mux.HandleFunc("/protected", handlers.AuthenticateJWT(handleProtectedRoute))
+	//
+	//
+	//	mux.HandleFunc("/process", middleware.Logging(middleware.Auth(handlers.HandleProcess)))
+	//	mux.HandleFunc("/status", middleware.Logging(middleware.Auth(handlers.HandleStatus)))
+	//	mux.HandleFunc("/result", middleware.Logging(middleware.Auth(handlers.HandleResult)))
+	//	mux.HandleFunc("/export", middleware.Logging(middleware.Auth(handlers.HandleExport)))
 
-	// mux.HandleFunc("/signup", middleware.Logging(handlers.HandleSignUp))
 	log.Print("serving on :8080")
 	http.ListenAndServe(":8080", mux)
 }
 
-func handleProtectedRoute(w http.ResponseWriter, r *http.Request) {
-	// Get email from context
-	email, ok := r.Context().Value("email").(string)
-	if !ok {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+// used to check if the token is valid
+//
+// func handleProtectedRoute(w http.ResponseWriter, r *http.Request) {
+// 	// Get email from context
+// 	email, ok := r.Context().Value("email").(string)
+// 	if !ok {
+// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+// 		return
+// 	}
 
-	// Use the email...
-	fmt.Fprintf(w, "Welcome %s!", email)
-}
+// 	// Use the email...
+// 	fmt.Fprintf(w, "Welcome %s!", email)
+// }

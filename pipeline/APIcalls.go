@@ -4,11 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 )
 
-func embeddingsAPI(texts []string) ([][]float64, error) {
+func EmbeddingsAPI(texts []string) ([][]float64, error) {
 	account_id := os.Getenv("CLOUDFLARE_ACCOUNT_ID")
 	apiToken := os.Getenv("CLOUDFLARE_API_TOKEN")
 
@@ -22,6 +23,8 @@ func embeddingsAPI(texts []string) ([][]float64, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("%s", string(body))
 
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {

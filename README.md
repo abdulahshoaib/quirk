@@ -42,3 +42,9 @@ Primary backend language
 **Docker**
 
 Automated deployment through Docker containers
+
+## TO-DO
+
+-[ ] Export embeddings to ollama for sematic searching
+-[ ] Convert data into corpus locally
+-[ ] Create data ready for import into a vectorized Database - ChromaDB

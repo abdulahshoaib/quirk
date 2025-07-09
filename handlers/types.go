@@ -18,8 +18,6 @@ type Result struct {
 	Triples    []string
 }
 
-var jwtKey = []byte("your_secret_key")
-
 type UserCredentials struct {
 	Email string `json:"email"`
 }
