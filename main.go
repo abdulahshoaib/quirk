@@ -45,6 +45,7 @@ func main() {
 	mux.HandleFunc("/result", middleware.Logging((handlers.HandleResult)))
 	mux.HandleFunc("/export", middleware.Logging((handlers.HandleExport)))
 	mux.HandleFunc("/signup", middleware.Logging(handlers.HandleSignup))
+	mux.HandleFunc("/export-chroma", middleware.Logging(handlers.HandleExportToChroma))
 
 	// following command was used to check authentication
 	// mux.HandleFunc("/protected", handlers.AuthenticateJWT(handleProtectedRoute))
