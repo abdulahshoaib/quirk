@@ -1,25 +1,14 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
-
-var jwtKey = []byte("your_secret_key")
-
-type UserCredentials struct {
-	Email string `json:"email"`
-}
-
-type Claims struct {
-	Email string `json:"email"`
-	jwt.RegisteredClaims
-}
 
 func HandleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -32,14 +21,8 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
-
-	expirationTime := time.Now().Add(5 * time.Minute)
-
 	claims := &Claims{
 		Email: creds.Email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -49,8 +32,22 @@ func HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err = Db.Exec(`
+       INSERT INTO user_tokens (email, token) 
+        VALUES ($1, $2)`, creds.Email, tokenstr)
+
+	if err != nil {
+		fmt.Printf("Failed to store token: %v", err)
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"token": tokenstr})
+	json.NewEncoder(w).Encode(map[string]string{
+		"token": tokenstr,
+		"email": creds.Email,
+	})
+
 }
 
 func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
@@ -77,10 +74,18 @@ func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
+		var storedToken string
+		err = Db.QueryRow(`
+            SELECT token FROM user_tokens 
+            WHERE email = $1`, claims.Email).Scan(&storedToken)
 
+		if err != nil || storedToken != tokenstr {
+			http.Error(w, "Invalid token", http.StatusUnauthorized)
+			return
+		}
 		// Store email in context or pass it along
-		r.Header.Set("X-User-Email", claims.Email)
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "email", claims.Email)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	}
 }
 
