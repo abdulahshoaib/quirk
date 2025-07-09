@@ -8,6 +8,12 @@ import (
 	"net/http"
 )
 
+// checkHealth verifies the availability of a ChromaDB instance by sending a heartbeat
+// request to the tenant/database endpoint.
+//
+// Returns:
+//   - 200 OK if the database is healthy
+//   - Error and HTTP status code if health check fails
 func checkHealth(req ReqParams) (int, error) {
 	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/heartbeat",
 		req.Host,
@@ -18,7 +24,7 @@ func checkHealth(req ReqParams) (int, error) {
 
 	res, err := http.Get(url)
 	if err != nil {
-		return 0, fmt.Errorf("failed to reach ChromaDB: %w", err)
+		return http.StatusInternalServerError, fmt.Errorf("failed to reach ChromaDB: %w", err)
 	}
 	defer res.Body.Close()
 
@@ -29,13 +35,25 @@ func checkHealth(req ReqParams) (int, error) {
 	return res.StatusCode, nil
 }
 
-// http://$host:$port/api/v2/tenants/$tenants/databases/$databas}/collections/$collection_id/add
+// CreateNewCollection adds a new collection with embeddings to ChromaDB,
+// after verifying database health.
+//
+// Endpoint:
+//   POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/add
+//
+// Parameters:
+//   - req: Contains connection details for ChromaDB
+//   - payload: Collection payload (metadata, IDs, embeddings, etc.)
+//
+// Returns:
+//   - 200 OK if operation succeeds
+//   - Error and HTTP status code if marshaling or HTTP request fails
 func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
-	// status, err := checkHealth(req)
-	// if status != http.StatusOK || err != nil {
-	// 	log.Fatal("Health Check failed")
-	// 	return status, err
-	// }
+	status, err := checkHealth(req)
+	if status != http.StatusOK || err != nil {
+		log.Fatal("Health Check failed")
+		return status, err
+	}
 
 	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/collections/%s/add",
 		req.Host,
@@ -61,13 +79,25 @@ func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
 	return http.StatusOK, nil
 }
 
-// http://$host:$port/api/v2/tenants/$tenants/databases/$databas}/collections/$collection_id/update
+// UpdateCollection updates an existing ChromaDB collection with new embeddings,
+// after verifying database health.
+//
+// Endpoint:
+//   POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/update
+//
+// Parameters:
+//   - req: Contains connection details for ChromaDB
+//   - payload: Updated collection payload with embeddings
+//
+// Returns:
+//   - 200 OK if operation succeeds
+//   - Error and HTTP status code if marshaling or HTTP request fails
 func UpdateCollection(req ReqParams, payload Payload) (int, error) {
-	// status, err := checkHealth(req)
-	// if status != http.StatusOK || err != nil {
-	// 	log.Fatal("Health Check failed")
-	// 	return status, err
-	// }
+	status, err := checkHealth(req)
+	if status != http.StatusOK || err != nil {
+		log.Fatal("Health Check failed")
+		return status, err
+	}
 
 	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/collections/%s/update",
 		req.Host,
