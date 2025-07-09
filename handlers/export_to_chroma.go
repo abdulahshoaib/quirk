@@ -8,6 +8,32 @@ import (
 	chromadb "github.com/abdulahshoaib/quirk/chromaDB"
 )
 
+// HandleExportToChroma handles exporting embeddings to a ChromaDB collection,
+// either by adding a new collection or updating an existing one.
+//
+// POST /export?object_id={id}&operation={add|update}
+//
+// Query Parameters:
+//   - object_id (required): Unique identifier corresponding to pre-computed embeddings
+//   - operation (required): Operation type; must be either "add" or "update"
+//
+// Request Body (JSON):
+//   {
+//     "req": { ... },       // chromadb.ReqParams object for Chroma configuration
+//     "payload": { ... }    // chromadb.Payload with metadata; embeddings will be injected
+//   }
+//
+// Response Codes:
+//   - 200 OK: Operation completed successfully
+//   - 400 Bad Request: Missing or invalid parameters, or malformed JSON body
+//   - 404 Not Found: No embeddings found for the given object_id
+//   - 5xx Error: Internal error during Chroma operation
+//
+// Behavior:
+//   - Reads the object_id and operation from query parameters
+//   - Validates presence and correctness of inputs
+//   - Extracts precomputed embeddings from in-memory jobResults map
+//   - Injects embeddings into the payload and calls ChromaDB API (add/update)
 func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("object_id")
 	operation := r.URL.Query().Get("operation")
