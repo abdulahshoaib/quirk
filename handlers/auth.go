@@ -38,7 +38,7 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
         VALUES ($1, $2)`, creds.Email, tokenstr)
 
 	if err != nil {
-		fmt.Printf("Failed to store token: %v", err)
+		fmt.Printf("Failed to store token: %v\n", err)
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -88,15 +88,4 @@ func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
 		ctx := context.WithValue(r.Context(), "email", claims.Email)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	}
-}
-
-func HandleWelcome(w http.ResponseWriter, r *http.Request) {
-	email := r.Header.Get("X-User-Email")
-	if email == "" {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"message": fmt.Sprintf("Welcome %s!", email)})
 }
