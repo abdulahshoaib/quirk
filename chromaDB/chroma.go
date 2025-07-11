@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+
+	"github.com/abdulahshoaib/quirk/pipeline"
 )
 
 // checkHealth verifies the availability of a ChromaDB instance by sending a heartbeat
@@ -39,7 +42,8 @@ func checkHealth(req ReqParams) (int, error) {
 // after verifying database health.
 //
 // Endpoint:
-//   POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/add
+//
+//	POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/add
 //
 // Parameters:
 //   - req: Contains connection details for ChromaDB
@@ -49,12 +53,6 @@ func checkHealth(req ReqParams) (int, error) {
 //   - 200 OK if operation succeeds
 //   - Error and HTTP status code if marshaling or HTTP request fails
 func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
-	status, err := checkHealth(req)
-	if status != http.StatusOK || err != nil {
-		log.Fatal("Health Check failed")
-		return status, err
-	}
-
 	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/collections/%s/add",
 		req.Host,
 		req.Port,
@@ -63,18 +61,30 @@ func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
 		req.Collection_id,
 	)
 
+	log.Println(url)
+
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to marshal payload: %w", err)
 	}
-
-	log.Printf("Req: %s", body)
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, respBody, "", "  ")
+	if err != nil {
+		log.Printf("Failed to format JSON: %v", err)
+	} else {
+		log.Printf("Res \n%s", prettyJSON.String())
+	}
 
 	return http.StatusOK, nil
 }
@@ -83,7 +93,8 @@ func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
 // after verifying database health.
 //
 // Endpoint:
-//   POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/update
+//
+//	POST /api/v2/tenants/{tenant}/databases/{database}/collections/{collection_id}/update
 //
 // Parameters:
 //   - req: Contains connection details for ChromaDB
@@ -93,12 +104,6 @@ func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
 //   - 200 OK if operation succeeds
 //   - Error and HTTP status code if marshaling or HTTP request fails
 func UpdateCollection(req ReqParams, payload Payload) (int, error) {
-	status, err := checkHealth(req)
-	if status != http.StatusOK || err != nil {
-		log.Fatal("Health Check failed")
-		return status, err
-	}
-
 	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/collections/%s/update",
 		req.Host,
 		req.Port,
@@ -119,4 +124,73 @@ func UpdateCollection(req ReqParams, payload Payload) (int, error) {
 	defer res.Body.Close()
 
 	return http.StatusOK, nil
+}
+
+func ListCollections(req ReqParams, query_text []string) (int, error) {
+	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/collections/%s/query",
+		req.Host,
+		req.Port,
+		req.Tenant,
+		req.Database,
+		req.Collection_id,
+	)
+
+	query_embeddings, err := pipeline.EmbeddingsAPI(query_text)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("embedding failed: %w", err)
+	}
+
+	if len(query_embeddings) == 0 || len(query_embeddings[0]) == 0 {
+		return http.StatusBadRequest, fmt.Errorf("no valid embeddings returned")
+	}
+
+	payload := map[string]interface{}{
+		"include":          []string{"distances", "documents"},
+		"n_results":        10,
+		"query_embeddings": query_embeddings,
+		// "where":         "optional-if-needed",
+		// "where_document":"optional-if-needed",
+		// "ids":           []string{"optional-id"},
+	}
+
+	body, err := json.Marshal(payload)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to marshal payload: %w", err)
+	}
+
+	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer res.Body.Close()
+	respBody, err := io.ReadAll(res.Body)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var prettyJSON bytes.Buffer
+	json.Indent(&prettyJSON, respBody, "", "  ")
+	if err != nil {
+		log.Printf("Failed to format JSON: %v", err)
+	} else {
+		log.Printf("Res \n%s", prettyJSON.String())
+	}
+
+	if err != nil {
+		log.Printf("Status: %d, error: %v", res.StatusCode, err)
+	} else {
+		log.Printf("Status: %d, no error", res.StatusCode)
+	}
+	return res.StatusCode, fmt.Errorf(string(respBody))
+}
+
+func toFloat32Matrix(input [][]float64) [][]float32 {
+	out := make([][]float32, len(input))
+	for i, row := range input {
+		out[i] = make([]float32, len(row))
+		for j, val := range row {
+			out[i][j] = float32(val)
+		}
+	}
+	return out
 }

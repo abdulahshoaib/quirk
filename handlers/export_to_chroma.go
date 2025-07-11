@@ -18,10 +18,11 @@ import (
 //   - operation (required): Operation type; must be either "add" or "update"
 //
 // Request Body (JSON):
-//   {
-//     "req": { ... },       // chromadb.ReqParams object for Chroma configuration
-//     "payload": { ... }    // chromadb.Payload with metadata; embeddings will be injected
-//   }
+//
+//	{
+//	  "req": { ... },       // chromadb.ReqParams object for Chroma configuration
+//	  "payload": { ... }    // chromadb.Payload with metadata; embeddings will be injected
+//	}
 //
 // Response Codes:
 //   - 200 OK: Operation completed successfully
@@ -76,10 +77,14 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	req = body.Req
 	payload = body.Payload
 	payload.Embeddings = results.Embeddings
+	payload.IDs = results.Filenames
 
-	log.Printf("req %s", req)
-	log.Printf("payload %s", payload)
-
+	log.Printf("ids=%d docs=%d embeds=%d metas=%d",
+		len(payload.IDs),
+		len(payload.Embeddings),
+		len(payload.Documents),
+		len(payload.Metadatas),
+	)
 	var (
 		status int
 		err    error

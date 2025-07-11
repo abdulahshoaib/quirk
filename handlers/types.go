@@ -16,6 +16,11 @@ type JobStatus struct {
 type Result struct {
 	Embeddings [][]float64
 	Triples    []string
+	Filenames  []string
+}
+
+type Name struct {
+	filename string
 }
 
 type UserCredentials struct {

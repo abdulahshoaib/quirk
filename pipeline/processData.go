@@ -3,7 +3,6 @@ package pipeline
 import (
 	"log"
 	"regexp"
-	"strings"
 	"sync"
 
 	"github.com/bbalet/stopwords"
@@ -13,7 +12,6 @@ var OverrideEmbeddingsAPI = EmbeddingsAPI
 
 func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack ResultWriter) {
 	var wg = sync.WaitGroup{}
-	var embs [][]float64
 	var trips []string
 	var corpusCleaned []string
 	var mutex = sync.Mutex{}
@@ -38,25 +36,18 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 	wg.Wait()
 	log.Printf("Processed job %s: %d files", object_id, len(memFiles))
 
-	// tokenized to send corpusData
-	var tokens []string
-	for _, corp := range corpusCleaned {
-		tok := strings.Fields(corp)
-		tokens = append(tokens, tok...)
+	for _, corpus := range corpusCleaned {
+		log.Println(corpus)
 	}
 
 	log.Printf("Created Tokens -> sending to API")
 
-	embeddings, err := EmbeddingsAPI(tokens)
+	embeddings, err := EmbeddingsAPI(corpusCleaned)
 	if err != nil {
 		log.Printf("embedding failed: %v", err)
 	} else {
-		log.Printf("Received embedding of length: %d", len(embeddings[0]))
+		log.Printf("Received %d embedding of length: %d", len(embeddings), len(embeddings[0]))
 	}
 
-	for _, emb := range embeddings {
-		embs = append(embs, emb)
-	}
-
-	writeBack(object_id, embs, trips)
+	writeBack(object_id, embeddings, trips)
 }

@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	// "log"
 	"net/http"
 	"os"
 )
@@ -24,7 +24,7 @@ func EmbeddingsAPI(texts []string) ([][]float64, error) {
 		return nil, err
 	}
 
-	log.Printf("%s", string(body))
+	 //log.Printf("%s", string(body))
 
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {

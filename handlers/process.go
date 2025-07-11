@@ -33,11 +33,13 @@ import (
 //   - 405: If method is not POST
 //
 // Example:
-//   POST /process
-//   Form field "files": [file1.txt, file2.txt]
+//
+//	POST /process
+//	Form field "files": [file1.txt, file2.txt]
 //
 // Response:
-//   { "object_id": "e45c1c20-b7a1-4d65-b7e1-a9fa73c0e217" }
+//
+//	{ "object_id": "e45c1c20-b7a1-4d65-b7e1-a9fa73c0e217" }
 //
 // The returned object ID can be used to:
 //   - Check status via /status?object_id=...
@@ -63,6 +65,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 
 	object_id := uuid.NewString()
 	memFiles := map[string][]byte{}
+	filenames := []string{}
 
 	for _, fh := range files {
 		file, err := fh.Open()
@@ -71,6 +74,8 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
+
+		filenames = append(filenames, fh.Filename)
 
 		buf := new(bytes.Buffer)
 		if _, err := io.Copy(buf, file); err != nil {
@@ -91,16 +96,17 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	mutex.Unlock()
 
 	// asynchronusly writes back whenever the embeddings are created
-	go pipeline.ProcessFiles(object_id, memFiles, func(id string, embs[][]float64, trips []string) {
+	go pipeline.ProcessFiles(object_id, memFiles, func(id string, embs [][]float64, trips []string) {
 		mutex.Lock()
 		jobResults[id] = Result{
 			Embeddings: embs,
 			Triples:    trips,
+			Filenames:  filenames,
 		}
 		jobStatuses[id] = JobStatus{
 			Status: "completed",
-			ETA: time.Time{},
-			Error: "",
+			ETA:    time.Time{},
+			Error:  "",
 		}
 		mutex.Unlock()
 	})
