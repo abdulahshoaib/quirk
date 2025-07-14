@@ -36,6 +36,7 @@ import (
 //   - Extracts precomputed embeddings from in-memory jobResults map
 //   - Injects embeddings into the payload and calls ChromaDB API (add/update)
 func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	id := r.URL.Query().Get("object_id")
 	operation := r.URL.Query().Get("operation")
 

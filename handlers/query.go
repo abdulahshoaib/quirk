@@ -2,14 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
 	"fmt"
+	"net/http"
 
 	chromadb "github.com/abdulahshoaib/quirk/chromaDB"
 )
 
 func HandleQuery(w http.ResponseWriter, r *http.Request) {
-	// Define anonymous struct for decoding request body
+	enableCors(&w)
 	var input struct {
 		Req  chromadb.ReqParams `json:"req"`
 		Text []string           `json:"text"`
@@ -22,12 +22,13 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call ListCollections with extracted data
-	status, err := chromadb.ListCollections(input.Req, input.Text)
+	status, err, res := chromadb.ListCollections(input.Req, input.Text)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("query failed: %v", err), status)
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(`{"message":"query successful"}`))
+	json.NewEncoder(w).Encode(res)
 }

@@ -11,6 +11,13 @@ import (
 	"github.com/google/uuid"
 )
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
+	(*w).Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+	(*w).Header().Set("Access-Control-Allow-Credentials", "true")
+}
+
 // HandleProcess handles the uploading of multiple files, starts asynchronous
 // processing using the embedding model, and returns a unique object ID.
 //
@@ -45,6 +52,7 @@ import (
 //   - Get results via /results?object_id=...
 //   - Export results via /export?object_id=...&format=csv|json
 func HandleProcess(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	if r.Method != http.MethodPost {
 		http.Error(w, "[POST] allowed", http.StatusMethodNotAllowed)
 		return

@@ -17,7 +17,7 @@ import (
 // Returns:
 //   - 200 OK if the database is healthy
 //   - Error and HTTP status code if health check fails
-func checkHealth(req ReqParams) (int, error) {
+func CheckHealth(req ReqParams) (int, error) {
 	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/heartbeat",
 		req.Host,
 		req.Port,
@@ -127,7 +127,7 @@ func UpdateCollection(req ReqParams, payload Payload) (int, error) {
 	return http.StatusOK, nil
 }
 
-func ListCollections(req ReqParams, query_text []string) (int, error) {
+func ListCollections(req ReqParams, query_text []string) (int, error, *ChromaQueryResponse) {
 	url := fmt.Sprintf("http://%s:%d/api/v2/tenants/%s/databases/%s/collections/%s/query",
 		req.Host,
 		req.Port,
@@ -138,11 +138,11 @@ func ListCollections(req ReqParams, query_text []string) (int, error) {
 
 	query_embeddings, err := pipeline.EmbeddingsAPI(query_text)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("embedding failed: %w", err)
+		return http.StatusInternalServerError, fmt.Errorf("embedding failed: %w", err), nil
 	}
 
 	if len(query_embeddings) == 0 || len(query_embeddings[0]) == 0 {
-		return http.StatusBadRequest, fmt.Errorf("no valid embeddings returned")
+		return http.StatusBadRequest, fmt.Errorf("no valid embeddings returned"), nil
 	}
 
 	payload := map[string]any{
@@ -156,31 +156,27 @@ func ListCollections(req ReqParams, query_text []string) (int, error) {
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("failed to marshal payload: %w", err)
+		return http.StatusInternalServerError, fmt.Errorf("failed to marshal payload: %w", err), nil
 	}
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("HTTP request failed: %w", err)
+		return http.StatusInternalServerError, fmt.Errorf("HTTP request failed: %w", err), nil
 	}
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("failed to read response: %w", err)
+		return http.StatusInternalServerError, fmt.Errorf("failed to read response: %w", err), nil
 	}
 
-	var prettyJSON bytes.Buffer
-	json.Indent(&prettyJSON, respBody, "", "  ")
-	if err != nil {
-		log.Printf("Failed to format JSON: %v", err)
-	} else {
-		log.Printf("Res \n%s", prettyJSON.String())
+	if res.StatusCode < 200 && res.StatusCode >= 300 {
+		return res.StatusCode, fmt.Errorf(string(respBody)), nil
 	}
 
-	if err != nil {
-		log.Printf("Status: %d, error: %v", res.StatusCode, err)
-	} else {
-		log.Printf("Status: %d, no error", res.StatusCode)
+	var parsed ChromaQueryResponse
+	if err := json.Unmarshal(respBody, &parsed); err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("invalid JSON format: %w", err), nil
 	}
-	return res.StatusCode, fmt.Errorf(string(respBody))
+
+	return res.StatusCode, nil, &parsed
 }

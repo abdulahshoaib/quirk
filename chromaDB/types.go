@@ -17,3 +17,9 @@ type ReqParams struct {
 	Database      string
 	Collection_id string
 }
+
+type ChromaQueryResponse struct {
+	Documents [][]string  `json:"documents"`
+	Distances [][]float64 `json:"distances"`
+	IDs       [][]string  `json:"ids,omitempty"`
+}

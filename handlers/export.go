@@ -25,6 +25,7 @@ import (
 //   - text/csv for CSV exports
 //   - application/json for JSON exports
 func HandleExport(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	id := r.URL.Query().Get("object_id")
 	format := r.URL.Query().Get("format")
 
