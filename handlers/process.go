@@ -66,6 +66,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	object_id := uuid.NewString()
 	memFiles := map[string][]byte{}
 	filenames := []string{}
+	filecontent := []string{}
 
 	for _, fh := range files {
 		file, err := fh.Open()
@@ -74,8 +75,10 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
+		contentBytes, err := io.ReadAll(file)
 
 		filenames = append(filenames, fh.Filename)
+		filecontent = append(filecontent, string(contentBytes))
 
 		buf := new(bytes.Buffer)
 		if _, err := io.Copy(buf, file); err != nil {
@@ -102,6 +105,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 			Embeddings: embs,
 			Triples:    trips,
 			Filenames:  filenames,
+			Filecontent: filecontent,
 		}
 		jobStatuses[id] = JobStatus{
 			Status: "completed",

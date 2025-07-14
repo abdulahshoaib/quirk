@@ -14,9 +14,10 @@ type JobStatus struct {
 }
 
 type Result struct {
-	Embeddings [][]float64
-	Triples    []string
-	Filenames  []string
+	Embeddings  [][]float64
+	Triples     []string
+	Filenames   []string
+	Filecontent []string
 }
 
 type Name struct {

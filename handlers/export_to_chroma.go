@@ -78,11 +78,12 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	payload = body.Payload
 	payload.Embeddings = results.Embeddings
 	payload.IDs = results.Filenames
+	payload.Documents = results.Filecontent
 
 	log.Printf("ids=%d docs=%d embeds=%d metas=%d",
 		len(payload.IDs),
-		len(payload.Embeddings),
 		len(payload.Documents),
+		len(payload.Embeddings),
 		len(payload.Metadatas),
 	)
 	var (
