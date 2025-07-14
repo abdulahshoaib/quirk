@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"io"
 	"log"
@@ -76,18 +75,16 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 		contentBytes, err := io.ReadAll(file)
-
-		filenames = append(filenames, fh.Filename)
-		filecontent = append(filecontent, string(contentBytes))
-
-		buf := new(bytes.Buffer)
-		if _, err := io.Copy(buf, file); err != nil {
+		if err != nil {
 			http.Error(w, "Read error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		memFiles[fh.Filename] = buf.Bytes()
-		log.Printf("Uploading file: %s (%d)", fh.Filename, len(buf.Bytes()))
+		filenames = append(filenames, fh.Filename)
+		filecontent = append(filecontent, string(contentBytes))
+		memFiles[fh.Filename] = contentBytes
+
+		log.Printf("Uploading file: %s (%d)", fh.Filename, len(contentBytes))
 	}
 
 	mutex.Lock()
@@ -102,9 +99,9 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	go pipeline.ProcessFiles(object_id, memFiles, func(id string, embs [][]float64, trips []string) {
 		mutex.Lock()
 		jobResults[id] = Result{
-			Embeddings: embs,
-			Triples:    trips,
-			Filenames:  filenames,
+			Embeddings:  embs,
+			Triples:     trips,
+			Filenames:   filenames,
 			Filecontent: filecontent,
 		}
 		jobStatuses[id] = JobStatus{

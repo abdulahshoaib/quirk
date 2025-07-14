@@ -21,12 +21,13 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 		go func(fname string, data []byte) {
 			defer wg.Done()
 
-			re := regexp.MustCompile(`'`)
+			re := regexp.MustCompile(`['\n]`)
 			raw := string(data)
 
-			// removing ' (apostrophe)
+			// removing ' (apostrophe) and '\n'
 			cleaned := re.ReplaceAllString(raw, "")
 			corpus := stopwords.CleanString(cleaned, "en", true)
+			log.Println(corpus)
 
 			mutex.Lock()
 			corpusCleaned = append(corpusCleaned, corpus)
@@ -35,10 +36,6 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 	}
 	wg.Wait()
 	log.Printf("Processed job %s: %d files", object_id, len(memFiles))
-
-	for _, corpus := range corpusCleaned {
-		log.Println(corpus)
-	}
 
 	log.Printf("Created Tokens -> sending to API")
 

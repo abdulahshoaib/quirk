@@ -116,6 +116,7 @@ func UpdateCollection(req ReqParams, payload Payload) (int, error) {
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to marshal payload: %w", err)
 	}
+	log.Println(string(body))
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
@@ -144,7 +145,7 @@ func ListCollections(req ReqParams, query_text []string) (int, error) {
 		return http.StatusBadRequest, fmt.Errorf("no valid embeddings returned")
 	}
 
-	payload := map[string]interface{}{
+	payload := map[string]any{
 		"include":          []string{"distances", "documents"},
 		"n_results":        10,
 		"query_embeddings": query_embeddings,
@@ -182,15 +183,4 @@ func ListCollections(req ReqParams, query_text []string) (int, error) {
 		log.Printf("Status: %d, no error", res.StatusCode)
 	}
 	return res.StatusCode, fmt.Errorf(string(respBody))
-}
-
-func toFloat32Matrix(input [][]float64) [][]float32 {
-	out := make([][]float32, len(input))
-	for i, row := range input {
-		out[i] = make([]float32, len(row))
-		for j, val := range row {
-			out[i][j] = float32(val)
-		}
-	}
-	return out
 }
