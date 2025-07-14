@@ -45,6 +45,7 @@ Automated deployment through Docker containers
 
 ## TO-DO
 
--[ ] Export embeddings to ollama for sematic searching
--[ ] Convert data into corpus locally
--[ ] Create data ready for import into a vectorized Database - ChromaDB
+-[x] Export embeddings to ollama for sematic searching
+-[x] Convert data into corpus locally
+-[x] Create data ready for import into a vectorized Database - ChromaDB
+-[ ] parsing PDF, CSV, JSON, DOC
