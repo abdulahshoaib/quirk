@@ -17,15 +17,9 @@ echo -e "${YELLOW}Starting Go tests...${NC}\n"
 for pkg in $(go list ./... | grep -v /vendor/); do
     ((total_packages++))
     echo -e "${YELLOW}Testing $pkg${NC}"
-<<<<<<< Updated upstream
-
-    go test -cover -v $pkg
-
-=======
-    
+   
     go test -cover -v $pkg
     
->>>>>>> Stashed changes
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}PASS: $pkg${NC}\n"
         ((passed_packages++))

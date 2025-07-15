@@ -1,7 +1,6 @@
 package main
 
 import (
-<<<<<<< Updated upstream
 	"os"
 	"testing"
 )
@@ -32,22 +31,4 @@ func TestConnect_Integration(t *testing.T) {
 	if err := db.Ping(); err != nil {
 		t.Errorf("Ping failed: %v", err)
 	}
-=======
-	"log"
-	"testing"
-)
-
-func TestMain(t *testing.T) {
-
-	var err error
-	db, err = connect()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer db.Close()
-
-	// Basic test to verify package compilation
-	t.Log("Main package compiled successfully")
-
->>>>>>> Stashed changes
 }
