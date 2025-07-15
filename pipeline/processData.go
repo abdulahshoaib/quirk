@@ -2,13 +2,13 @@ package pipeline
 
 import (
 	"bytes"
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"regexp"
-	"sync"
-	"encoding/json"
-	"encoding/csv"
 	"strings"
+	"sync"
 
 	"rsc.io/pdf"
 
@@ -45,6 +45,9 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 	log.Printf("Processed job %s: %d files", object_id, len(memFiles))
 
 	log.Printf("Created Tokens -> sending to API")
+
+	// for testing
+	// embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
 
 	embeddings, err := EmbeddingsAPI(corpusCleaned)
 	if err != nil {
