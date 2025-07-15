@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/abdulahshoaib/quirk/pipeline"
 )
 
 func TestCheckHealth(t *testing.T) {
@@ -88,5 +90,50 @@ func TestUpdateCollection(t *testing.T) {
 	code, err := UpdateCollection(req, payload)
 	if err != nil || code != http.StatusOK {
 		t.Errorf("UpdateCollection failed: code=%d, err=%v", code, err)
+	}
+}
+func TestListCollections(t *testing.T) {
+	// Mock EmbeddingsAPI
+	originalEmbeddingsAPI := pipeline.OverrideEmbeddingsAPI
+	defer func() { pipeline.OverrideEmbeddingsAPI = originalEmbeddingsAPI }()
+	pipeline.OverrideEmbeddingsAPI = func(texts []string) ([][]float64, error) {
+		return [][]float64{{0.1, 0.2, 0.3}}, nil
+	}
+
+	// Mock ChromaDB server
+	mockResponse := ChromaQueryResponse{
+		Documents: [][]string{{"doc1"}},
+		Distances: [][]float64{{0.123}},
+		IDs:       [][]string{{"id1"}},
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v2/tenants/t/databases/d/collections/c/query" {
+			json.NewEncoder(w).Encode(mockResponse)
+		} else {
+			http.NotFound(w, r)
+		}
+	}))
+	defer server.Close()
+
+	addr := server.Listener.Addr().(*net.TCPAddr)
+
+	req := ReqParams{
+		Host:          addr.IP.String(),
+		Port:          addr.Port,
+		Tenant:        "t",
+		Database:      "d",
+		Collection_id: "c",
+	}
+
+	statusCode, err, parsed := ListCollections(req, []string{"test query"})
+	if err != nil {
+		t.Fatalf("Expected no error, got %v", err)
+	}
+	if statusCode != http.StatusOK {
+		t.Errorf("Expected status 200, got %d", statusCode)
+	}
+	if parsed == nil || len(parsed.Documents) != 1 {
+		t.Error("Expected one document in response")
 	}
 }
