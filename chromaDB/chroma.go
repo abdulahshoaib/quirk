@@ -170,7 +170,7 @@ func ListCollections(req ReqParams, query_text []string) (int, error, *ChromaQue
 	}
 
 	if res.StatusCode < 200 && res.StatusCode >= 300 {
-		return res.StatusCode, fmt.Errorf(string(respBody)), nil
+		return res.StatusCode, fmt.Errorf("%s", string(respBody)), nil
 	}
 
 	var parsed ChromaQueryResponse
