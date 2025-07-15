@@ -82,17 +82,38 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
+
 		contentBytes, err := io.ReadAll(file)
 		if err != nil {
 			http.Error(w, "Read error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
 
-		filenames = append(filenames, fh.Filename)
-		filecontent = append(filecontent, string(contentBytes))
-		memFiles[fh.Filename] = contentBytes
+		contentType := http.DetectContentType(contentBytes)
+		var textBytes []byte
 
-		log.Printf("Uploading file: %s (%d)", fh.Filename, len(contentBytes))
+		switch contentType {
+		case "application/pdf":
+			textBytes, err = pipeline.PdfToText(contentBytes)
+		case "text/csv":
+			textBytes, err = pipeline.CsvToText(contentBytes)
+		case "application/json":
+			textBytes, err = pipeline.JsonToText(contentBytes)
+		default:
+			http.Error(w, "Unsupported file type: "+contentType, http.StatusBadRequest)
+			return
+		}
+
+		if err != nil {
+			http.Error(w, "Failed to process file: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		memFiles[fh.Filename] = textBytes
+		filenames = append(filenames, fh.Filename)
+		filecontent = append(filecontent, string(textBytes))
+
+		log.Printf("Processed file: %s (%d bytes)", fh.Filename, len(contentBytes))
 	}
 
 	mutex.Lock()

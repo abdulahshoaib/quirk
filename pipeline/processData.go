@@ -1,9 +1,16 @@
 package pipeline
 
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"regexp"
 	"sync"
+	"encoding/json"
+	"encoding/csv"
+	"strings"
+
+	"rsc.io/pdf"
 
 	"github.com/bbalet/stopwords"
 )
@@ -47,4 +54,50 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 	}
 
 	writeBack(object_id, embeddings, trips)
+}
+
+func PdfToText(content []byte) ([]byte, error) {
+	reader := bytes.NewReader(content)
+	pdfReader, err := pdf.NewReader(reader, int64(len(content)))
+	if err != nil {
+		return nil, fmt.Errorf("Failed to create PDF reader: %v", err)
+	}
+
+	var text string
+
+	numPages := pdfReader.NumPage()
+	for i := 1; i <= numPages; i++ {
+		page := pdfReader.Page(i)
+
+		content := page.Content()
+		for _, textObj := range content.Text {
+			text += textObj.S
+		}
+	}
+	return []byte(text), nil
+}
+
+func JsonToText(content []byte) ([]byte, error) {
+	var prettyJSON bytes.Buffer
+	err := json.Indent(&prettyJSON, content, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse JSON: %v", err)
+	}
+	return prettyJSON.Bytes(), nil
+}
+
+func CsvToText(content []byte) ([]byte, error) {
+	r := csv.NewReader(bytes.NewReader(content))
+	records, err := r.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse CSV: %v", err)
+	}
+
+	var builder strings.Builder
+	for _, record := range records {
+		builder.WriteString(strings.Join(record, "\t")) // Tab-separated
+		builder.WriteString("\n")
+	}
+
+	return []byte(builder.String()), nil
 }
