@@ -137,3 +137,47 @@ func TestListCollections(t *testing.T) {
 		t.Error("Expected one document in response")
 	}
 }
+
+func TestCreateNewCollection_HTTPFailure(t *testing.T) {
+	req := ReqParams{
+		Host:   "localhost",
+		Port:   9999, // likely to fail
+		Tenant: "t", Database: "d", Collection_id: "c",
+	}
+
+	payload := Payload{
+		IDs: []string{"id1"},
+	}
+
+	code, err := CreateNewCollection(req, payload)
+	if err == nil {
+		t.Error("Expected error but got none")
+	}
+	if code != http.StatusInternalServerError {
+		t.Errorf("Expected 500, got %d", code)
+	}
+}
+
+func TestListCollections_InvalidJSON(t *testing.T) {
+	pipeline.OverrideEmbeddingsAPI = func(texts []string) ([][]float64, error) {
+		return [][]float64{{0.1}}, nil
+	}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("not-json"))
+	}))
+	defer server.Close()
+
+	addr := server.Listener.Addr().(*net.TCPAddr)
+	req := ReqParams{
+		Host: addr.IP.String(), Port: addr.Port,
+		Tenant: "t", Database: "d", Collection_id: "c",
+	}
+
+	code, err, _ := ListCollections(req, []string{"text"})
+	if err == nil {
+		t.Error("Expected JSON parsing error")
+	}
+	if code != http.StatusInternalServerError {
+		t.Errorf("Expected 500, got %d", code)
+	}
+}

@@ -58,7 +58,7 @@ func TestThreading(t *testing.T) {
 		if len(capturedTrips) != 100 {
 			t.Errorf("expected 2 triples, got %d", len(capturedTrips))
 		}
-	case <-time.After( 10 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("timeout waiting for goroutines to finish")
 	}
 }

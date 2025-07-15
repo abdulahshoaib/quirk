@@ -10,9 +10,8 @@ import (
 	"strings"
 	"sync"
 
-
-	"github.com/ledongthuc/pdf"
 	"github.com/bbalet/stopwords"
+	"github.com/ledongthuc/pdf"
 )
 
 var OverrideEmbeddingsAPI = EmbeddingsAPI
@@ -49,6 +48,7 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 	// for testing
 	// embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
 
+	// for production
 	embeddings, err := EmbeddingsAPI(corpusCleaned)
 	if err != nil {
 		log.Printf("embedding failed: %v", err)

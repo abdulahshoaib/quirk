@@ -23,6 +23,7 @@ func main() {
 		os.Getenv("DB_NAME"),
 	)
 
+	connect()
 	log.Println("connected to DB")
 
 	Db, err := sql.Open("postgres", dsn)

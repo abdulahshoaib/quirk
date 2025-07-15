@@ -3,7 +3,7 @@ package utils
 import (
 	"encoding/csv"
 	"fmt"
-	"log"
+	// "log"
 	"os"
 	"strconv"
 	"strings"
