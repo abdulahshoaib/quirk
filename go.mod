@@ -11,4 +11,7 @@ require (
 	rsc.io/pdf v0.1.1
 )
 
-require golang.org/x/text v0.15.0 // indirect
+require (
+	github.com/DATA-DOG/go-sqlmock v1.5.2 // indirect
+	golang.org/x/text v0.15.0 // indirect
+)
