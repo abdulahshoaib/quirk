@@ -30,6 +30,7 @@ import (
 //	  ]
 //	}
 func HandleResult(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	id := r.URL.Query().Get("object_id")
 	if id == "" {
 		http.Error(w, "Missing object_id parameter", http.StatusBadRequest)

@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
+	"strings"
 
 	"github.com/abdulahshoaib/quirk/pipeline"
 	"github.com/google/uuid"
@@ -90,6 +91,10 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 		}
 
 		contentType := http.DetectContentType(contentBytes)
+		if idx := strings.Index(contentType, ";"); idx != -1 {
+			contentType = strings.TrimSpace(contentType[:idx])
+		}
+
 		var textBytes []byte
 
 		switch contentType {
@@ -99,6 +104,10 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 			textBytes, err = pipeline.CsvToText(contentBytes)
 		case "application/json":
 			textBytes, err = pipeline.JsonToText(contentBytes)
+		case "text/plain", "text/markdown", "text/x-log", "text/x-yaml", "text/x-markdown":
+			textBytes = contentBytes
+		case "application/xml", "text/xml":
+			textBytes = contentBytes
 		default:
 			http.Error(w, "Unsupported file type: "+contentType, http.StatusBadRequest)
 			return
@@ -118,7 +127,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 
 	mutex.Lock()
 	jobStatuses[object_id] = JobStatus{
-		Status: "in_progress",
+		Status: "processing",
 		ETA:    time.Now().Add(5 * time.Second),
 		Error:  "",
 	}

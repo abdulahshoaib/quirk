@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"rsc.io/pdf"
 
+	"github.com/ledongthuc/pdf"
 	"github.com/bbalet/stopwords"
 )
 
@@ -34,7 +34,7 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 			// removing ' (apostrophe) and '\n'
 			cleaned := re.ReplaceAllString(raw, "")
 			corpus := stopwords.CleanString(cleaned, "en", true)
-			log.Println(corpus)
+			log.Printf("Corpus :%s", corpus)
 
 			mutex.Lock()
 			corpusCleaned = append(corpusCleaned, corpus)
@@ -63,21 +63,31 @@ func PdfToText(content []byte) ([]byte, error) {
 	reader := bytes.NewReader(content)
 	pdfReader, err := pdf.NewReader(reader, int64(len(content)))
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create PDF reader: %v", err)
+		return nil, fmt.Errorf("failed to create PDF reader: %v", err)
 	}
 
-	var text string
-
+	var builder strings.Builder
 	numPages := pdfReader.NumPage()
+
 	for i := 1; i <= numPages; i++ {
 		page := pdfReader.Page(i)
-
-		content := page.Content()
-		for _, textObj := range content.Text {
-			text += textObj.S
+		if page.V.IsNull() { // make sure the page exists
+			continue
 		}
+
+		texts, err := page.GetPlainText(nil)
+		if err != nil {
+			log.Printf("failed to extract text from page %d: %v", i, err)
+			continue
+		}
+
+		builder.WriteString(texts)
 	}
-	return []byte(text), nil
+
+	result := builder.String()
+	log.Printf("PDF Text Result:\n%s", result)
+
+	return []byte(result), nil
 }
 
 func JsonToText(content []byte) ([]byte, error) {

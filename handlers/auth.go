@@ -11,6 +11,7 @@ import (
 )
 
 func HandleSignup(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -34,7 +35,7 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_, err = Db.Exec(`
-       INSERT INTO user_tokens (email, token) 
+       INSERT INTO user_tokens (email, token)
         VALUES ($1, $2)`, creds.Email, tokenstr)
 
 	if err != nil {
@@ -77,7 +78,7 @@ func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
 		}
 		var storedToken string
 		err = Db.QueryRow(`
-            SELECT token FROM user_tokens 
+            SELECT token FROM user_tokens
             WHERE email = $1`, claims.Email).Scan(&storedToken)
 
 		if err != nil || storedToken != tokenstr {

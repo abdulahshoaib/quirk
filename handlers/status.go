@@ -23,6 +23,7 @@ import (
 //	- {"status": "running", "eta_seconds": 120, "error_message": null}
 //  - {"status": "failed", eta_seconds": 0, "error_message": Failed...}
 func HandleStatus(w http.ResponseWriter, r *http.Request) {
+	enableCors(&w)
 	id := r.URL.Query().Get("object_id")
 	if id == "" {
 		http.Error(w, "Missing object_id", http.StatusBadRequest)
@@ -46,6 +47,4 @@ func HandleStatus(w http.ResponseWriter, r *http.Request) {
 		"eta_seconds":   eta,
 		"error_message": status.Error,
 	})
-
-	w.Write([]byte("/status hit"))
 }

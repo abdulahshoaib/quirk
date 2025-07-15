@@ -138,7 +138,7 @@ func ListCollections(req ReqParams, query_text []string) (int, error, *ChromaQue
 
 	query_embeddings, err := pipeline.EmbeddingsAPI(query_text)
 	if err != nil {
-		return http.StatusInternalServerError, fmt.Errorf("embedding failed: %w", err), nil
+		return http.StatusInternalServerError, fmt.Errorf("embedding failed: %s", err), nil
 	}
 
 	if len(query_embeddings) == 0 || len(query_embeddings[0]) == 0 {
