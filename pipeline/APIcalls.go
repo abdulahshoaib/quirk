@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+var EmbeddingsAPIURL = "https://api.cloudflare.com/client/v4/accounts/%s/ai/run/@cf/baai/bge-large-en-v1.5"
+
 func EmbeddingsAPI(texts []string) ([][]float64, error) {
 	account_id := os.Getenv("CLOUDFLARE_ACCOUNT_ID")
 	apiToken := os.Getenv("CLOUDFLARE_API_TOKEN")
@@ -17,14 +19,15 @@ func EmbeddingsAPI(texts []string) ([][]float64, error) {
 		return nil, fmt.Errorf("missing CLOUDFLARE_ACC or CLOUDFLARE_TOKEN")
 	}
 
+	// for testing
+	// url := fmt.Sprintf(EmbeddingsAPIURL, account_id)
+
 	url := fmt.Sprintf("https://api.cloudflare.com/client/v4/accounts/%s/ai/run/@cf/baai/bge-large-en-v1.5", account_id)
 
 	body, err := json.Marshal(BGEReq{Text: texts})
 	if err != nil {
 		return nil, err
 	}
-
-	//log.Printf("%s", string(body))
 
 	req, err := http.NewRequest("POST", url, bytes.NewReader(body))
 	if err != nil {

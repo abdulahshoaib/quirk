@@ -46,10 +46,11 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 	log.Printf("Created Tokens -> sending to API")
 
 	// for testing
-	embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
+	// embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
 
 	// for production
-	// embeddings, err := EmbeddingsAPI(corpusCleaned)
+	embeddings, err := EmbeddingsAPI(corpusCleaned)
+
 	if err != nil {
 		log.Printf("embedding failed: %v", err)
 	} else {
@@ -85,8 +86,6 @@ func PdfToText(content []byte) ([]byte, error) {
 	}
 
 	result := builder.String()
-	log.Printf("PDF Text Result:\n%s", result)
-
 	return []byte(result), nil
 }
 
@@ -101,6 +100,7 @@ func JsonToText(content []byte) ([]byte, error) {
 
 func CsvToText(content []byte) ([]byte, error) {
 	r := csv.NewReader(bytes.NewReader(content))
+	r.FieldsPerRecord = -1
 	records, err := r.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse CSV: %v", err)
