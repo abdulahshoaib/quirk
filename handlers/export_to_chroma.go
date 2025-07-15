@@ -37,6 +37,12 @@ import (
 //   - Injects embeddings into the payload and calls ChromaDB API (add/update)
 func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
 	id := r.URL.Query().Get("object_id")
 	operation := r.URL.Query().Get("operation")
 
@@ -65,7 +71,8 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		http.Error(w, "invalid JSON body"+err.Error(), http.StatusBadRequest)
+		log.Println(err.Error())
 		return
 	}
 
