@@ -45,10 +45,16 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 
 	log.Printf("Created Tokens -> sending to API")
 
+<<<<<<< Updated upstream
 	// for testing
 	// embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
 
 	// for production
+=======
+	// following line if for moack test
+	//embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
+
+>>>>>>> Stashed changes
 	embeddings, err := EmbeddingsAPI(corpusCleaned)
 	if err != nil {
 		log.Printf("embedding failed: %v", err)
