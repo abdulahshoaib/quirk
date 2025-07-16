@@ -73,20 +73,24 @@ func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
 		return http.StatusInternalServerError, fmt.Errorf("HTTP request failed: %w", err)
 	}
 	defer res.Body.Close()
+
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to read response: %w", err)
 	}
 
 	var prettyJSON bytes.Buffer
-	json.Indent(&prettyJSON, respBody, "", "  ")
-	if err != nil {
+	if err := json.Indent(&prettyJSON, respBody, "", "  "); err != nil {
 		log.Printf("Failed to format JSON: %v", err)
 	} else {
 		log.Printf("Res \n%s", prettyJSON.String())
 	}
 
-	return http.StatusOK, nil
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return res.StatusCode, fmt.Errorf("create failed: %s", prettyJSON.String())
+	}
+
+	return res.StatusCode, nil
 }
 
 // UpdateCollection updates an existing ChromaDB collection with new embeddings,
@@ -124,7 +128,12 @@ func UpdateCollection(req ReqParams, payload Payload) (int, error) {
 	}
 	defer res.Body.Close()
 
-	return http.StatusOK, nil
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		respBody, _ := io.ReadAll(res.Body)
+		return res.StatusCode, fmt.Errorf("update failed: %s", string(respBody))
+	}
+
+	return res.StatusCode, nil
 }
 
 func ListCollections(req ReqParams, query_text []string) (int, error, *ChromaQueryResponse) {

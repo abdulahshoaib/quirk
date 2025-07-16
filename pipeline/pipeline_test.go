@@ -30,6 +30,7 @@ type captureResult struct {
 	embeddings [][]float64
 	triples    []string
 }
+
 func TestProcessFiles(t *testing.T) {
 	// override API
 	OverrideEmbeddingsAPI = mockEmbeddingsAPI
@@ -195,7 +196,6 @@ func TestEmbeddingsAPI(t *testing.T) {
 		t.Errorf("expected %v, got %v", expected, result)
 	}
 }
-
 func TestEmbeddingsAPI_MissingEnvVars(t *testing.T) {
 	os.Unsetenv("CLOUDFLARE_ACCOUNT_ID")
 	os.Unsetenv("CLOUDFLARE_API_TOKEN")
@@ -205,7 +205,6 @@ func TestEmbeddingsAPI_MissingEnvVars(t *testing.T) {
 		t.Errorf("Expected error for missing env vars, got: %v", err)
 	}
 }
-
 func TestEmbeddingsAPI_BadJSONResponse(t *testing.T) {
 	os.Setenv("CLOUDFLARE_ACCOUNT_ID", "id")
 	os.Setenv("CLOUDFLARE_API_TOKEN", "token")
@@ -222,7 +221,6 @@ func TestEmbeddingsAPI_BadJSONResponse(t *testing.T) {
 		t.Fatal("Expected JSON decode error, got nil")
 	}
 }
-
 func TestEmbeddingsAPI_RequestError(t *testing.T) {
 	os.Setenv("CLOUDFLARE_ACCOUNT_ID", "id")
 	os.Setenv("CLOUDFLARE_API_TOKEN", "token")
@@ -236,7 +234,11 @@ func TestEmbeddingsAPI_RequestError(t *testing.T) {
 	}
 }
 
+// ------------------------------
+// ------------------------------
 // ---- Testing JSON => Text ----
+// ------------------------------
+// ------------------------------
 func TestJsonToText(t *testing.T) {
 	input := []byte(`{"name":"Eesa","age":21}`)
 	expected := "{\n  \"name\": \"Eesa\",\n  \"age\": 21\n}"
@@ -249,7 +251,6 @@ func TestJsonToText(t *testing.T) {
 		t.Errorf("JsonToText output mismatch.\nExpected:\n%s\nGot:\n%s", expected, output)
 	}
 }
-
 func TestJsonToText_Empty(t *testing.T) {
 	input := []byte("")
 
