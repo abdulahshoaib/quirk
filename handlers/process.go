@@ -59,18 +59,21 @@ func enableCors(w *http.ResponseWriter) {
 func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	if r.Method != http.MethodPost {
+		log.Fatal("Method not allowed")
 		http.Error(w, "[POST] allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	err := r.ParseMultipartForm(50 << 20) // 50MB
 	if err != nil {
+		log.Fatalf("Failed to parse: %v", err.Error())
 		http.Error(w, "Failed to parse:"+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	files := r.MultipartForm.File["files"]
 	if len(files) == 0 {
+		log.Fatal("No files uploaded")
 		http.Error(w, "No files uploaded", http.StatusBadRequest)
 		return
 	}
@@ -83,6 +86,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	for _, fh := range files {
 		file, err := fh.Open()
 		if err != nil {
+			log.Fatalf("File open error: %v", err.Error())
 			http.Error(w, "File open error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -90,6 +94,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 
 		contentBytes, err := ReadAll(file)
 		if err != nil {
+			log.Fatalf("Read error: %v", err.Error())
 			http.Error(w, "Read error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -102,6 +107,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 			fileExt != ".md" &&
 			fileExt != ".yml" &&
 			fileExt != ".xml" {
+			log.Fatalf("Unsupported file extension: %v", err.Error())
 			http.Error(w, "Unsupported file extension: "+fileExt, http.StatusBadRequest)
 			return
 		}
@@ -125,11 +131,13 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 		case "application/xml", "text/xml":
 			textBytes = contentBytes
 		default:
+			log.Fatalf("Unsupported file type: %s", contentType)
 			http.Error(w, "Unsupported file type: "+contentType, http.StatusBadRequest)
 			return
 		}
 
 		if err != nil {
+			log.Fatal("Failed to process file: %v", err.Error())
 			http.Error(w, "Failed to process file: "+err.Error(), http.StatusInternalServerError)
 			return
 		}

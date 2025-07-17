@@ -47,15 +47,18 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	operation := r.URL.Query().Get("operation")
 
 	if id == "" {
+		log.Fatal("Missing object_id")
 		http.Error(w, "Missing object_id", http.StatusBadRequest)
 		return
 	}
 	if operation == "" {
+		log.Fatal("operation missing")
 		http.Error(w, "operation missing", http.StatusBadRequest)
 		return
 	}
 
 	if operation != "update" && operation != "add" {
+		log.Fatal("invalid operation param")
 		http.Error(w, "invalid operation param", http.StatusBadRequest)
 		return
 	}
@@ -71,13 +74,14 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		http.Error(w, "invalid JSON body"+err.Error(), http.StatusBadRequest)
 		log.Println(err.Error())
+		http.Error(w, "invalid JSON body"+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	results, ok := jobResults[id]
 	if !ok {
+		log.Fatal("embedding not found for object_id")
 		http.Error(w, "embedding not found for object_id", http.StatusNotFound)
 		return
 	}
@@ -107,7 +111,7 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Printf("Chroma operation failed: %v", err)
+		log.Fatalf("Chroma operation failed: %v", err)
 		http.Error(w, err.Error(), status)
 		return
 	}

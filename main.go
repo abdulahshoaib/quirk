@@ -30,6 +30,24 @@ func RunApp() error {
 	if err != nil {
 		return fmt.Errorf("failed to open db: %v", err)
 	}
+	defer Db.Close()
+
+	dbName := os.Getenv("DB_NAME")
+	var exists bool
+	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = '%s')`, dbName)
+	err = Db.QueryRow(query).Scan(&exists)
+	if err != nil {
+		return fmt.Errorf("failed to check database existence: %v", err)
+	}
+	if !exists {
+		_, err = Db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
+		if err != nil {
+			return fmt.Errorf("failed to create database: %v", err)
+		}
+		log.Printf("Database %s created successfully", dbName)
+	} else {
+		log.Printf("Database %s already exists", dbName)
+	}
 
 	if err := Db.Ping(); err != nil {
 		return fmt.Errorf("failed to ping db: %v", err)
