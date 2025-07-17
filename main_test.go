@@ -1,34 +1,45 @@
 package main
 
 import (
+	"net/http"
 	"os"
+	"strings"
 	"testing"
+	"time"
 )
 
-// TestConnect_Integration tests the connect() function by checking if environment variables
-// are set and a DB connection can be established.
-func TestConnect_Integration(t *testing.T) {
+func TestRunApp_StartsServer(t *testing.T) {
+	// Skip test if DB env vars aren't set
 	requiredVars := []string{"DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME"}
-
-	// check if all env vars are set
-	missing := false
+	skip := false
 	for _, v := range requiredVars {
 		if os.Getenv(v) == "" {
 			t.Logf("Missing environment variable: %s", v)
-			missing = true
+			skip = true
 		}
 	}
-	if missing {
-		t.Skip("Skipping DB connection test due to missing env variables")
+	if skip {
+		t.Skip("Skipping integration test due to missing env vars")
 	}
 
-	db, err := connect()
+	// Start server in goroutine
+	go func() {
+		err := RunApp()
+		if err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+			t.Errorf("RunApp failed: %v", err)
+		}
+	}()
+
+	time.Sleep(1 * time.Second)
+
+	resp, err := http.Get("http://localhost:8080/status")
 	if err != nil {
-		t.Fatalf("connect() failed: %v", err)
+		t.Fatalf("failed to connect to server: %v", err)
 	}
-	defer db.Close()
+	defer resp.Body.Close()
 
-	if err := db.Ping(); err != nil {
-		t.Errorf("Ping failed: %v", err)
+	// Expect 200, 404, or some valid response
+	if resp.StatusCode < 200 || resp.StatusCode >= 500 {
+		t.Errorf("unexpected response code: %d", resp.StatusCode)
 	}
 }

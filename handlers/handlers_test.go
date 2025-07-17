@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"testing"
-
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -184,3 +183,33 @@ func TestMain(m *testing.M) {
 	m.Run()
 }
 
+func TestInitDB_WithMock(t *testing.T) {
+	mockDB, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to create sqlmock: %v", err)
+	}
+	defer mockDB.Close()
+
+	InitDB(mockDB)
+
+	if Db != mockDB {
+		t.Error("Expected db.Db to be mockDB")
+	}
+}
+func TestInitDB(t *testing.T) {
+	// Use an in-memory SQLite DB for testing
+	testDB, _, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("Failed to open test DB: %v", err)
+	}
+	defer testDB.Close()
+
+	InitDB(testDB)
+
+	if Db == nil {
+		t.Fatal("Expected db.Db to be set, got nil")
+	}
+	if Db != testDB {
+		t.Error("Expected db.Db to be assigned to testDB instance")
+	}
+}

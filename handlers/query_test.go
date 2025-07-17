@@ -8,14 +8,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	// chromadb "github.com/abdulahshoaib/quirk/chromaDB"
 	"github.com/abdulahshoaib/quirk/pipeline"
 
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 )
 
-// mock embedding function
 func mockEmbeddingsAPI(texts []string) ([][]float64, error) {
 	return [][]float64{{1.1, 2.2, 3.3}}, nil
 }

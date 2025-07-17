@@ -1,4 +1,0 @@
-name,email,age,score,active
-John Doe,john@example.com,30,95.5,true
-Jane Smith,jane@example.com,25,88.2,false
-Bob Johnson,bob@example.com,42,72.0,true

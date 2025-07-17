@@ -13,7 +13,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-func main() {
+func RunApp() error {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		os.Getenv("DB_HOST"),
@@ -28,11 +28,11 @@ func main() {
 
 	Db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("failed to open db: %v", err)
+		return fmt.Errorf("failed to open db: %v", err)
 	}
 
 	if err := Db.Ping(); err != nil {
-		log.Fatalf("failed to ping db: %v", err)
+		return fmt.Errorf("failed to ping db: %v", err)
 	}
 
 	middleware.InitDB(Db)
@@ -57,20 +57,11 @@ func main() {
 	//	mux.HandleFunc("/result", middleware.Logging(middleware.Auth(handlers.HandleResult)))
 	//	mux.HandleFunc("/export", middleware.Logging(middleware.Auth(handlers.HandleExport)))
 
-	log.Print("serving on :8080")
-	http.ListenAndServe(":8080", mux)
+	return http.ListenAndServe(":8080", mux)
 }
 
-// used to check if the token is valid
-//
-// func handleProtectedRoute(w http.ResponseWriter, r *http.Request) {
-// 	// Get email from context
-// 	email, ok := r.Context().Value("email").(string)
-// 	if !ok {
-// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-// 		return
-// 	}
-
-// 	// Use the email...
-// 	fmt.Fprintf(w, "Welcome %s!", email)
-// }
+func main() {
+	if err := RunApp(); err != nil {
+		log.Fatalf("app failed: %v", err)
+	}
+}
