@@ -5,8 +5,9 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"time"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/abdulahshoaib/quirk/pipeline"
 	"github.com/google/uuid"
@@ -87,6 +88,18 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 		contentBytes, err := io.ReadAll(file)
 		if err != nil {
 			http.Error(w, "Read error: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		fileExt := strings.ToLower(filepath.Ext(fh.Filename))
+		if fileExt != ".pdf" &&
+			fileExt != ".csv" &&
+			fileExt != ".txt" &&
+			fileExt != ".json" &&
+			fileExt != ".md" &&
+			fileExt != ".yml" &&
+			fileExt != ".xml" {
+			http.Error(w, "Unsupported file extension: "+fileExt, http.StatusBadRequest)
 			return
 		}
 

@@ -3,10 +3,14 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/abdulahshoaib/quirk/pipeline"
 )
 
 func createMultipartRequest(t *testing.T, fieldName, filename, contentType, content string) *http.Request {
@@ -88,3 +92,12 @@ func TestHandleProcess_UnsupportedFile(t *testing.T) {
 	}
 }
 
+func TestHandleProcess_ReadError(t *testing.T)  {
+	req := createMultipartRequest(t, "files", "test.txt", "text/plain", "")
+
+	oldReadAll := func(r io.Reader) ([]byte, error){
+		return nil, errors.New("forced read error")
+	}
+	defer func (){ pipeline.ReadAll = oldReadAll }()
+
+}
