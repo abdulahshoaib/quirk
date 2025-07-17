@@ -1,13 +1,17 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
-	// "sync"
+
 	"testing"
+
 	"time"
+
+	"github.com/DATA-DOG/go-sqlmock"
 )
 
 func TestHandleResult_Completed(t *testing.T) {
@@ -95,6 +99,77 @@ func TestHandleResult_MissingID(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("Expected 400 for missing ID, got %d", w.Code)
+	}
+}
+
+func TestHandleSignup_Success(t *testing.T) {
+
+	// mock DB
+	db, mock, _ := sqlmock.New()
+	defer db.Close()
+	Db = db
+
+	jwtKey = []byte("testsecret") // set your jwtKey
+
+	// expected insert
+	mock.ExpectExec("INSERT INTO user_tokens").
+		WithArgs("test@example.com", sqlmock.AnyArg()).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+
+	// request body
+	creds := UserCredentials{
+		Email: "test@example.com",
+	}
+	body, _ := json.Marshal(creds)
+
+	req := httptest.NewRequest("POST", "/signup", bytes.NewReader(body))
+	w := httptest.NewRecorder()
+
+	HandleSignup(w, req)
+
+	resp := w.Result()
+
+	// check status
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("Expected status 200, got %d", resp.StatusCode)
+	}
+
+	// check CORS headers
+	if got := resp.Header.Get("Access-Control-Allow-Origin"); got != "*" {
+		t.Errorf("CORS header mismatch: got %s", got)
+	}
+
+	// check response body
+	var respBody map[string]string
+	json.NewDecoder(resp.Body).Decode(&respBody)
+
+	if _, ok := respBody["token"]; !ok {
+		t.Errorf("Token not found in response")
+	}
+	if respBody["email"] != "test@example.com" {
+		t.Errorf("Expected email to match, got %s", respBody["email"])
+	}
+}
+
+func TestHandleSignup_InvalidMethod(t *testing.T) {
+	req := httptest.NewRequest("GET", "/signup", nil)
+	w := httptest.NewRecorder()
+
+	HandleSignup(w, req)
+
+	if w.Code != http.StatusMethodNotAllowed {
+		t.Errorf("Expected 405, got %d", w.Code)
+	}
+}
+
+func TestHandleSignup_InvalidJSON(t *testing.T) {
+	req := httptest.NewRequest("POST", "/signup", strings.NewReader("{invalid-json}"))
+	w := httptest.NewRecorder()
+
+	HandleSignup(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("Expected 400 for invalid JSON, got %d", w.Code)
 	}
 }
 
