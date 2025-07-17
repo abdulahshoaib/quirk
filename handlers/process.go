@@ -13,6 +13,9 @@ import (
 	"github.com/google/uuid"
 )
 
+// For testing
+var ReadAll = io.ReadAll
+
 func enableCors(w *http.ResponseWriter) {
 	(*w).Header().Set("Access-Control-Allow-Origin", "*")
 	(*w).Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
@@ -85,7 +88,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		contentBytes, err := io.ReadAll(file)
+		contentBytes, err := ReadAll(file)
 		if err != nil {
 			http.Error(w, "Read error: "+err.Error(), http.StatusInternalServerError)
 			return
