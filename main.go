@@ -38,6 +38,10 @@ func RunApp() error {
 	middleware.InitDB(Db)
 	handlers.InitDB(Db)
 
+	if err := InitSchema(Db); err != nil {
+		return fmt.Errorf("failed to sync db: %v", err)
+	}
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/login", middleware.Logging((handlers.HandleSignup)))
@@ -57,6 +61,7 @@ func RunApp() error {
 	//	mux.HandleFunc("/result", middleware.Logging(middleware.Auth(handlers.HandleResult)))
 	//	mux.HandleFunc("/export", middleware.Logging(middleware.Auth(handlers.HandleExport)))
 
+	log.Println("Server Started on Port 8080")
 	return http.ListenAndServe(":8080", mux)
 }
 
