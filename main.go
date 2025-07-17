@@ -14,33 +14,32 @@ import (
 )
 
 func RunApp() error {
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	adminDSN := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=postgres sslmode=disable",
 		os.Getenv("DB_HOST"),
 		os.Getenv("DB_PORT"),
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
 	)
 
-	connect()
-	log.Println("connected to DB")
-
-	Db, err := sql.Open("postgres", dsn)
+	adminDB, err := sql.Open("postgres", adminDSN)
 	if err != nil {
-		return fmt.Errorf("failed to open db: %v", err)
+		return fmt.Errorf("failed to connect to admin db: %v", err)
 	}
-	defer Db.Close()
+	defer adminDB.Close()
 
+	// Check if DB exists
 	dbName := os.Getenv("DB_NAME")
 	var exists bool
-	query := fmt.Sprintf(`SELECT EXISTS(SELECT 1 FROM pg_database WHERE datname = '%s')`, dbName)
-	err = Db.QueryRow(query).Scan(&exists)
+	query := `SELECT EXISTS(SELECT 1 FROM pg_database WHERE LOWER(datname) = LOWER($1))`
+	err = adminDB.QueryRow(query, dbName).Scan(&exists)
 	if err != nil {
 		return fmt.Errorf("failed to check database existence: %v", err)
 	}
+
 	if !exists {
-		_, err = Db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbName))
+		log.Printf("Database %s does not exist, creating...", dbName)
+		_, err = adminDB.Exec(fmt.Sprintf("CREATE DATABASE \"%s\"", dbName)) // quotes for safety
 		if err != nil {
 			return fmt.Errorf("failed to create database: %v", err)
 		}
@@ -49,14 +48,19 @@ func RunApp() error {
 		log.Printf("Database %s already exists", dbName)
 	}
 
-	if err := Db.Ping(); err != nil {
-		return fmt.Errorf("failed to ping db: %v", err)
+	// Now connect to the actual app database
+	db, err := connect()
+	if err != nil {
+		return fmt.Errorf("failed to connect to DB: %v", err)
 	}
+	defer db.Close()
 
-	middleware.InitDB(Db)
-	handlers.InitDB(Db)
+	log.Println("Connected to DB successfully")
 
-	if err := InitSchema(Db); err != nil {
+	middleware.InitDB(db)
+	handlers.InitDB(db)
+
+	if err := InitSchema(db); err != nil {
 		return fmt.Errorf("failed to sync db: %v", err)
 	}
 
