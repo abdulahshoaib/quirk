@@ -19,9 +19,6 @@ func EmbeddingsAPI(texts []string) ([][]float64, error) {
 		return nil, fmt.Errorf("missing CLOUDFLARE_ACC or CLOUDFLARE_TOKEN")
 	}
 
-	// for testing
-	// url := fmt.Sprintf(EmbeddingsAPIURL, account_id)
-
 	url := fmt.Sprintf(EmbeddingsAPIURL, account_id)
 
 	body, err := json.Marshal(BGEReq{Text: texts})
