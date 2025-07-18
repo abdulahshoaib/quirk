@@ -70,7 +70,7 @@ func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
 
 		claims := &Claims{}
 
-		token, err := jwt.ParseWithClaims(tokenstr, claims, func(token *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenstr, claims, func(token *jwt.Token) (any, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method")
 			}

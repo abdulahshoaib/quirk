@@ -22,7 +22,7 @@ func EmbeddingsAPI(texts []string) ([][]float64, error) {
 	// for testing
 	// url := fmt.Sprintf(EmbeddingsAPIURL, account_id)
 
-	url := fmt.Sprintf("https://api.cloudflare.com/client/v4/accounts/%s/ai/run/@cf/baai/bge-large-en-v1.5", account_id)
+	url := fmt.Sprintf(EmbeddingsAPIURL, account_id)
 
 	body, err := json.Marshal(BGEReq{Text: texts})
 	if err != nil {

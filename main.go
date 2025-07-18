@@ -66,14 +66,14 @@ func RunApp() error {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/login", middleware.Logging((handlers.HandleSignup)))
-	mux.HandleFunc("/process", middleware.Logging((handlers.HandleProcess)))
-	mux.HandleFunc("/status", middleware.Logging((handlers.HandleStatus)))
-	mux.HandleFunc("/result", middleware.Logging((handlers.HandleResult)))
-	mux.HandleFunc("/export", middleware.Logging((handlers.HandleExport)))
 	mux.HandleFunc("/signup", middleware.Logging(handlers.HandleSignup))
-	mux.HandleFunc("/export-chroma", middleware.Logging(handlers.HandleExportToChroma))
-	mux.HandleFunc("/query", middleware.Logging(handlers.HandleQuery))
+
+	mux.HandleFunc("/process", middleware.Logging(handlers.AuthenticateJWT(handlers.HandleProcess)))
+	mux.HandleFunc("/status", middleware.Logging(handlers.AuthenticateJWT(handlers.HandleStatus)))
+	mux.HandleFunc("/result", middleware.Logging(handlers.AuthenticateJWT(handlers.HandleResult)))
+	mux.HandleFunc("/export", middleware.Logging(handlers.AuthenticateJWT(handlers.HandleExport)))
+	mux.HandleFunc("/export-chroma", middleware.Logging(handlers.AuthenticateJWT(handlers.HandleExportToChroma)))
+	mux.HandleFunc("/query", middleware.Logging(handlers.AuthenticateJWT(handlers.HandleQuery)))
 	// following command was used to check authentication
 	// mux.HandleFunc("/protected", handlers.AuthenticateJWT(handleProtectedRoute))
 	//
