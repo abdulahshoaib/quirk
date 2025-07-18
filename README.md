@@ -16,6 +16,7 @@ Upon receiving data, the system processes and embeds it into CSV format, structu
 - Automatically initializes and migrates PostgreSQL database if not already set up
 - JWT-based authentication with persistent token storage
 - Direct ChromaDB integration for vector storage
+- **NEW!** functioning frontend for GUI interface [Frontend](https://github.com/abdulahshoaib/quirk-frontend)
 
 ## Core Functionality
 
@@ -58,7 +59,7 @@ Primary backend language
 ### Embeddings
 - **Provider:** [Cloudflare Workers AI](https://developers.cloudflare.com/workers-ai/)
 - **Model:** @cf/baai/bge-large-en-v1.5
-- **Dimensions:** 1024
+- **Embedding Dimensions:** 1024
 
 ### Docker
 [**Docker Hub**](https://hub.docker.com/r/abdulahshoaib/quirk) - Automated deployment through Docker containers
