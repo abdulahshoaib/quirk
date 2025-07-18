@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/abdulahshoaib/quirk/pipeline"
@@ -61,7 +61,7 @@ func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
 		req.Collection_id,
 	)
 
-	log.Println(url)
+	slog.Debug("POST request URL", slog.String("url", url))
 
 	body, err := json.Marshal(payload)
 	if err != nil {
@@ -81,9 +81,9 @@ func CreateNewCollection(req ReqParams, payload Payload) (int, error) {
 
 	var prettyJSON bytes.Buffer
 	if err := json.Indent(&prettyJSON, respBody, "", "  "); err != nil {
-		log.Printf("Failed to format JSON: %v", err)
+		slog.Error("failed to format JSON", slog.Any("error", err))
 	} else {
-		log.Printf("Res \n%s", prettyJSON.String())
+		slog.Debug("response", slog.String("body", prettyJSON.String()))
 	}
 
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
@@ -120,7 +120,7 @@ func UpdateCollection(req ReqParams, payload Payload) (int, error) {
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("failed to marshal payload: %w", err)
 	}
-	log.Println(string(body))
+	slog.Debug("update payload", slog.String("payload", string(body)))
 
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
@@ -147,6 +147,7 @@ func ListCollections(req ReqParams, query_text []string) (int, error, *ChromaQue
 
 	//for test
 	query_embeddings, err := pipeline.OverrideEmbeddingsAPI(query_text)
+	slog.Debug("query embeddings", slog.Any("query_text", query_text), slog.Any("embedding_dim", len(query_embeddings)))
 
 	//for production
 	// query_embeddings, err := pipeline.EmbeddingsAPI(query_text)
@@ -172,10 +173,12 @@ func ListCollections(req ReqParams, query_text []string) (int, error, *ChromaQue
 		return http.StatusInternalServerError, fmt.Errorf("failed to marshal payload: %w", err), nil
 	}
 
+	slog.Debug("query request payload", slog.String("url", url), slog.Any("payload", payload))
 	res, err := http.Post(url, "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf("HTTP request failed: %w", err), nil
 	}
+
 	defer res.Body.Close()
 	respBody, err := io.ReadAll(res.Body)
 	if err != nil {

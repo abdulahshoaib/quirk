@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"log"
+	"log/slog"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -14,15 +14,15 @@ import (
 func HandleSignup(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	if r.Method != http.MethodPost {
-		log.Fatal("Method not allowed")
+		slog.Warn("non-POST method", slog.String("method", r.Method))
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	var creds UserCredentials
 	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
-		log.Fatal("Invalid request")
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		slog.Error("invalid request body", slog.Any("error", err), slog.String("handler", "HandleSignup"))
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 	claims := &Claims{
@@ -33,7 +33,7 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 	tokenstr, err := token.SignedString(jwtKey)
 	if err != nil {
-		log.Fatalf("Could not generate token: %v", err.Error())
+		slog.Error("could not generate token", slog.Any("error", err), slog.String("handler", "HandleSignup"))
 		http.Error(w, "Could not generate token", http.StatusInternalServerError)
 		return
 	}
@@ -43,7 +43,7 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
         VALUES ($1, $2)`, creds.Email, tokenstr)
 
 	if err != nil {
-		log.Fatalf("Failed to store token: %v", err.Error())
+		slog.Error("failed to store token", slog.Any("error", err.Error), slog.String("handler", "HandleSignup"))
 		http.Error(w, "Internal server error", http.StatusInternalServerError)
 		return
 	}
@@ -60,7 +60,7 @@ func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			log.Fatal("Missing token")
+			slog.Warn("authorization token missing")
 			http.Error(w, "Missing token", http.StatusUnauthorized)
 			return
 		}
@@ -78,7 +78,7 @@ func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
 		})
 
 		if err != nil || !token.Valid {
-			log.Fatalf("Invalid token: ", err.Error())
+			slog.Error("invalid token", slog.Any("error", err))
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}
@@ -88,7 +88,7 @@ func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
             WHERE email = $1`, claims.Email).Scan(&storedToken)
 
 		if err != nil || storedToken != tokenstr {
-			log.Fatalf("Invalid token: ", err.Error())
+			slog.Error("invalid token", slog.Any("error", err))
 			http.Error(w, "Invalid token", http.StatusUnauthorized)
 			return
 		}

@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/csv"
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 )
@@ -31,7 +31,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 	format := r.URL.Query().Get("format")
 
 	if id == "" {
-		log.Fatal("object_id missing")
+		slog.Error("missing object_id", slog.String("handler", "HandleExport"))
 		http.Error(w, "object_id missing", http.StatusBadRequest)
 		return
 	}
@@ -41,7 +41,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 	mutex.RUnlock()
 
 	if !ok {
-		log.Fatal("Result not found")
+		slog.Error("result not found", slog.String("object_id", id))
 		http.Error(w, "Result not found", http.StatusNotFound)
 		return
 	}
@@ -71,7 +71,7 @@ func HandleExport(w http.ResponseWriter, r *http.Request) {
 		return
 
 	default:
-		log.Fatal("Format unrecognized")
+		slog.Error("unrecognized format", slog.String("format", format), slog.String("object_id", id))
 		http.Error(w, "Format unrecognized", http.StatusBadRequest)
 		return
 	}

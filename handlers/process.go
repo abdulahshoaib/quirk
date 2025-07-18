@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -59,21 +59,21 @@ func enableCors(w *http.ResponseWriter) {
 func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	if r.Method != http.MethodPost {
-		log.Fatal("Method not allowed")
+		slog.Warn("non-POST method", slog.String("method", r.Method))
 		http.Error(w, "[POST] allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	err := r.ParseMultipartForm(50 << 20) // 50MB
 	if err != nil {
-		log.Fatalf("Failed to parse: %v", err.Error())
+		slog.Error("failed to parse multipart form", slog.Any("error", err))
 		http.Error(w, "Failed to parse:"+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	files := r.MultipartForm.File["files"]
 	if len(files) == 0 {
-		log.Fatal("No files uploaded")
+		slog.Error("no files uploaded")
 		http.Error(w, "No files uploaded", http.StatusBadRequest)
 		return
 	}
@@ -86,7 +86,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	for _, fh := range files {
 		file, err := fh.Open()
 		if err != nil {
-			log.Fatalf("File open error: %v", err.Error())
+			slog.Error("failed to open uploaded file", slog.String("filename", fh.Filename), slog.Any("error", err))
 			http.Error(w, "File open error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -94,7 +94,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 
 		contentBytes, err := ReadAll(file)
 		if err != nil {
-			log.Fatalf("Read error: %v", err.Error())
+			slog.Error("failed to read uploaded file", slog.String("filename", fh.Filename), slog.Any("error", err))
 			http.Error(w, "Read error: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -107,7 +107,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 			fileExt != ".md" &&
 			fileExt != ".yml" &&
 			fileExt != ".xml" {
-			log.Fatalf("Unsupported file extension: %v", err.Error())
+			slog.Error("unsupported file extension", slog.String("filename", fh.Filename), slog.String("ext", fileExt))
 			http.Error(w, "Unsupported file extension: "+fileExt, http.StatusBadRequest)
 			return
 		}
@@ -131,13 +131,13 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 		case "application/xml", "text/xml":
 			textBytes = contentBytes
 		default:
-			log.Fatalf("Unsupported file type: %s", contentType)
+			slog.Error("unsupported content type", slog.String("filename", fh.Filename), slog.String("type", contentType))
 			http.Error(w, "Unsupported file type: "+contentType, http.StatusBadRequest)
 			return
 		}
 
 		if err != nil {
-			log.Fatal("Failed to process file: %v", err.Error())
+			slog.Error("file processing error", slog.String("filename", fh.Filename), slog.Any("error", err))
 			http.Error(w, "Failed to process file: "+err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -146,7 +146,7 @@ func HandleProcess(w http.ResponseWriter, r *http.Request) {
 		filenames = append(filenames, fh.Filename)
 		filecontent = append(filecontent, string(textBytes))
 
-		log.Printf("Processed file: %s (%d bytes)", fh.Filename, len(contentBytes))
+		slog.Info("processed file", slog.String("filename", fh.Filename), slog.Int("bytes", len(contentBytes)))
 	}
 
 	mutex.Lock()

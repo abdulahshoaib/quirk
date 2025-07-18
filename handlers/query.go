@@ -3,7 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 
 	chromadb "github.com/abdulahshoaib/quirk/chromaDB"
@@ -18,7 +18,7 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 
 	// Parse and decode JSON
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
-		log.Fatal("invalid request body")
+		slog.Error("invalid request body", slog.Any("error", err), slog.String("handler", "HandleQuery"))
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -26,10 +26,12 @@ func HandleQuery(w http.ResponseWriter, r *http.Request) {
 	// Call ListCollections with extracted data
 	status, err, res := chromadb.ListCollections(input.Req, input.Text)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("chroma query failed", slog.Any("error", err), slog.Int("status", status), slog.String("handler", "HandleQuery"))
 		http.Error(w, fmt.Sprintf("query failed: %v", err), status)
 		return
 	}
+
+	slog.Info("Chroma query succeeded", slog.Int("status", status), slog.Any("response", res), slog.String("handler", "HandleQuery"))
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

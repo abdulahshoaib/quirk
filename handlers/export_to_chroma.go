@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 
 	chromadb "github.com/abdulahshoaib/quirk/chromaDB"
@@ -47,18 +47,18 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	operation := r.URL.Query().Get("operation")
 
 	if id == "" {
-		log.Fatal("Missing object_id")
+		slog.Error("missing object_id", slog.String("handler", "HandleExportToChroma"))
 		http.Error(w, "Missing object_id", http.StatusBadRequest)
 		return
 	}
 	if operation == "" {
-		log.Fatal("operation missing")
+		slog.Error("missing operation", slog.String("object_id", id), slog.String("handler", "HandleExportToChroma"))
 		http.Error(w, "operation missing", http.StatusBadRequest)
 		return
 	}
 
 	if operation != "update" && operation != "add" {
-		log.Fatal("invalid operation param")
+		slog.Error("invalid operation param", slog.String("operation", operation), slog.String("object_id", id))
 		http.Error(w, "invalid operation param", http.StatusBadRequest)
 		return
 	}
@@ -74,14 +74,14 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		log.Println(err.Error())
+		slog.Error("invalid JSON body", slog.Any("error", err), slog.String("handler", "HandleExportToChroma"))
 		http.Error(w, "invalid JSON body"+err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	results, ok := jobResults[id]
 	if !ok {
-		log.Fatal("embedding not found for object_id")
+		slog.Error("embedding not found", slog.String("object_id", id), slog.String("handler", "HandleExportToChroma"))
 		http.Error(w, "embedding not found for object_id", http.StatusNotFound)
 		return
 	}
@@ -92,12 +92,13 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	payload.IDs = results.Filenames
 	payload.Documents = results.Filecontent
 
-	log.Printf("ids=%d docs=%d embeds=%d metas=%d",
-		len(payload.IDs),
-		len(payload.Documents),
-		len(payload.Embeddings),
-		len(payload.Metadatas),
+	slog.Info("embedding export payload size",
+		slog.Int("ids", len(payload.IDs)),
+		slog.Int("docs", len(payload.Documents)),
+		slog.Int("embeds", len(payload.Embeddings)),
+		slog.Int("metas", len(payload.Metadatas)),
 	)
+
 	var (
 		status int
 		err    error
@@ -111,7 +112,7 @@ func HandleExportToChroma(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		log.Fatalf("Chroma operation failed: %v", err)
+		slog.Error("chroma operation failed", slog.String("operation", operation), slog.Any("error", err))
 		http.Error(w, err.Error(), status)
 		return
 	}

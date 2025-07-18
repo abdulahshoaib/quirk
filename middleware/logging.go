@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"log"
+	"log/slog"
 )
 
 // fn logging(fn http.HandlerFunc) http.HandlerFunc
@@ -11,7 +11,7 @@ import (
 // the route when hit
 func Logging(fn http.HandlerFunc) http.HandlerFunc{
 	return func (w http.ResponseWriter, r *http.Request)  {
-		log.Println(r.URL.Path)
+		slog.Info("route mounted", r.URL.Path)
 		fn(w, r)
 	}
 }

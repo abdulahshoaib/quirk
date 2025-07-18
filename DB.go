@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	_ "github.com/lib/pq"
@@ -22,13 +22,14 @@ func InitSchema(db *sql.DB) error {
 	`
 	res, err := db.Exec(schema)
 	if err != nil {
+		slog.Error("error initializing schema", slog.Any("error", err))
 		return fmt.Errorf("Error initializing schema: %v", err)
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		log.Printf("DB schema initialized, but couldn't get rows affected: %v", err)
+		slog.Warn("schema initialized but couldn't get rows affected", slog.Any("error", err))
 	} else {
-		log.Printf("DB schema initialized, rows affected: %d", rowsAffected)
+		slog.Info("DB schema initialized", slog.Int64("rows_affected", rowsAffected))
 	}
 	return nil
 }

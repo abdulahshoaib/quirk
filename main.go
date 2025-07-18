@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -38,14 +38,14 @@ func RunApp() error {
 	}
 
 	if !exists {
-		log.Printf("Database %s does not exist, creating...", dbName)
+		slog.Info("database does not exist, creating", slog.String("db_name", dbName))
 		_, err = adminDB.Exec(fmt.Sprintf("CREATE DATABASE \"%s\"", dbName)) // quotes for safety
 		if err != nil {
 			return fmt.Errorf("failed to create database: %v", err)
 		}
-		log.Printf("Database %s created successfully", dbName)
+		slog.Info("created database", slog.String("db_name", dbName))
 	} else {
-		log.Printf("Database %s already exists", dbName)
+		slog.Info("database already exists", slog.String("db_name", dbName))
 	}
 
 	// Now connect to the actual app database
@@ -55,7 +55,7 @@ func RunApp() error {
 	}
 	defer db.Close()
 
-	log.Println("Connected to DB successfully")
+	slog.Info("connected to database successfully", slog.String("db_name", dbName))
 
 	middleware.InitDB(db)
 	handlers.InitDB(db)
@@ -83,12 +83,12 @@ func RunApp() error {
 	//	mux.HandleFunc("/result", middleware.Logging(middleware.Auth(handlers.HandleResult)))
 	//	mux.HandleFunc("/export", middleware.Logging(middleware.Auth(handlers.HandleExport)))
 
-	log.Println("Server Started on Port 8080")
+	slog.Info("server started", slog.String("port", "8080"))
 	return http.ListenAndServe(":8080", mux)
 }
 
 func main() {
 	if err := RunApp(); err != nil {
-		log.Fatalf("app failed: %v", err)
+		slog.Error("server", slog.Any("error", err))
 	}
 }

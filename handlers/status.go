@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -27,7 +27,7 @@ func HandleStatus(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
 	id := r.URL.Query().Get("object_id")
 	if id == "" {
-		log.Fatal("Missing object_id")
+		slog.Error("missing object_id", slog.String("handler", "HandleStatus"))
 		http.Error(w, "Missing object_id", http.StatusBadRequest)
 		return
 	}
@@ -37,7 +37,7 @@ func HandleStatus(w http.ResponseWriter, r *http.Request) {
 	mutex.RUnlock()
 
 	if !exists {
-		log.Fatal("Not Found")
+		slog.Warn("job status not found", slog.String("object_id", id))
 		http.Error(w, "Not Found", http.StatusNotFound)
 		return
 	}

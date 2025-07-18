@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"database/sql"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -23,26 +23,24 @@ func Auth(nx http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			log.Fatal("Missing or invalid Authorization Header")
+			slog.Warn("missing or invalid Authorization header", slog.String("handler", "Auth"))
 			http.Error(w, "Missing or invalid Authorization Header", http.StatusUnauthorized)
-			return
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		token = strings.TrimSpace(token)
 
 		if token == "" {
-			log.Fatal("Empty bearer token")
+
+			slog.Warn("empty bearer token", slog.String("handler", "Auth"))
 			http.Error(w, "Empty bearer token", http.StatusUnauthorized)
-			return
 		}
 
 		var exists bool
 		err := db.QueryRow("SELECT EXISTS (SELECT 1 FROM api_tokens WHERE token = $1)", token).Scan(&exists)
 		if err != nil || !exists {
-			log.Fatalf("Unauthorized: invalid token: %v", err.Error())
+			slog.Warn("unauthorized: invalid token", slog.String("handler", "Auth"), slog.String("token", token), slog.Any("error", err))
 			http.Error(w, "Unauthorized: invalid token", http.StatusUnauthorized)
-			return
 		}
 
 		nx(w, r)

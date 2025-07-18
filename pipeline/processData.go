@@ -5,7 +5,7 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"regexp"
 	"strings"
 	"sync"
@@ -33,7 +33,7 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 			// removing ' (apostrophe) and '\n'
 			cleaned := re.ReplaceAllString(raw, "")
 			corpus := stopwords.CleanString(cleaned, "en", true)
-			log.Printf("Corpus :%s", corpus)
+			slog.Debug("cleaned corpus", slog.String("filename", fname), slog.String("corpus", corpus))
 
 			mutex.Lock()
 			corpusCleaned = append(corpusCleaned, corpus)
@@ -41,9 +41,9 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 		}(fname, content)
 	}
 	wg.Wait()
-	log.Printf("Processed job %s: %d files", object_id, len(memFiles))
+	slog.Info("processed job", slog.String("object_id", object_id), slog.Int("file_count", len(memFiles)))
 
-	log.Printf("Created Tokens -> sending to API")
+	slog.Info("created tokens, sending to embedding API", slog.String("object_id", object_id))
 
 	// for testing
 	// embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
@@ -52,9 +52,9 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 	embeddings, err := EmbeddingsAPI(corpusCleaned)
 
 	if err != nil {
-		log.Printf("embedding failed: %v", err)
+		slog.Error("embedding API call failed", slog.String("object_id", object_id), slog.Any("error", err))
 	} else {
-		log.Printf("Received %d embedding of length: %d", len(embeddings), len(embeddings[0]))
+		slog.Info("received embeddings", slog.String("object_id", object_id), slog.Int("count", len(embeddings)), slog.Int("embedding_size", len(embeddings[0])))
 	}
 
 	writeBack(object_id, embeddings, trips)
@@ -78,7 +78,7 @@ func PdfToText(content []byte) ([]byte, error) {
 
 		texts, err := page.GetPlainText(nil)
 		if err != nil {
-			log.Printf("failed to extract text from page %d: %v", i, err)
+			slog.Error("failed to extract text from PDF page", slog.Int("page", i), slog.Any("error", err))
 			continue
 		}
 
