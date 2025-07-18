@@ -4,9 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"strings"
-	"log/slog"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -58,10 +58,23 @@ func HandleSignup(w http.ResponseWriter, r *http.Request) {
 
 func AuthenticateJWT(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		enableCors(&w)
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		slog.Info("Headers", slog.Any("headers", r.Header))
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			slog.Warn("authorization token missing")
 			http.Error(w, "Missing token", http.StatusUnauthorized)
+			return
+		}
+
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 

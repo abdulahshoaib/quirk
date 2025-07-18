@@ -58,12 +58,6 @@ func enableCors(w *http.ResponseWriter) {
 //   - Export results via /export?object_id=...&format=csv|json
 func HandleProcess(w http.ResponseWriter, r *http.Request) {
 	enableCors(&w)
-	if r.Method != http.MethodPost {
-		slog.Warn("non-POST method", slog.String("method", r.Method))
-		http.Error(w, "[POST] allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	err := r.ParseMultipartForm(50 << 20) // 50MB
 	if err != nil {
 		slog.Error("failed to parse multipart form", slog.Any("error", err))

@@ -11,7 +11,7 @@ import (
 // the route when hit
 func Logging(fn http.HandlerFunc) http.HandlerFunc{
 	return func (w http.ResponseWriter, r *http.Request)  {
-		slog.Info("route mounted", r.URL.Path)
+		slog.Info("route mounted", slog.Any("URL", r.URL.Path))
 		fn(w, r)
 	}
 }
