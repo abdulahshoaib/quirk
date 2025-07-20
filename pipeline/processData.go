@@ -14,7 +14,7 @@ import (
 	"github.com/ledongthuc/pdf"
 )
 
-var OverrideEmbeddingsAPI = EmbeddingsAPI
+var EmbeddingFn = EmbeddingsAPI
 
 func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack ResultWriter) {
 	var wg = sync.WaitGroup{}
@@ -45,11 +45,7 @@ func ProcessFiles(object_id string, memFiles map[string][]byte, writeBack Result
 
 	slog.Info("created tokens, sending to embedding API", slog.String("object_id", object_id))
 
-	// for testing
-	// embeddings, err := OverrideEmbeddingsAPI(corpusCleaned)
-
-	// for production
-	embeddings, err := EmbeddingsAPI(corpusCleaned)
+  embeddings, err := EmbeddingFn(corpusCleaned)
 
 	if err != nil {
 		slog.Error("embedding API call failed", slog.String("object_id", object_id), slog.Any("error", err))

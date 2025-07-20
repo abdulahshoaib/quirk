@@ -20,7 +20,7 @@ func mockEmbeddingsAPI(texts []string) ([][]float64, error) {
 
 func TestHandleQuery_Success(t *testing.T) {
 	// Override embedding function
-	pipeline.OverrideEmbeddingsAPI = mockEmbeddingsAPI
+	pipeline.EmbeddingFn = mockEmbeddingsAPI
 
 	// Activate HTTP mocking
 	httpmock.Activate()

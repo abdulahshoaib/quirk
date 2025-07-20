@@ -193,12 +193,12 @@ func TestUpdateCollection(t *testing.T) {
 }
 
 func TestListCollections(t *testing.T) {
-	// Backup and restore OverrideEmbeddingsAPI
-	original := pipeline.OverrideEmbeddingsAPI
-	defer func() { pipeline.OverrideEmbeddingsAPI = original }()
+	// Backup and restore EmbeddingFn
+	original := pipeline.EmbeddingFn
+	defer func() { pipeline.EmbeddingFn = original }()
 
 	t.Run("success", func(t *testing.T) {
-		pipeline.OverrideEmbeddingsAPI = func(texts []string) ([][]float64, error) {
+		pipeline.EmbeddingFn = func(texts []string) ([][]float64, error) {
 			return [][]float64{{0.1, 0.2, 0.3}}, nil
 		}
 
@@ -230,7 +230,7 @@ func TestListCollections(t *testing.T) {
 	})
 
 	t.Run("embedding API fails", func(t *testing.T) {
-		pipeline.OverrideEmbeddingsAPI = func(_ []string) ([][]float64, error) {
+		pipeline.EmbeddingFn = func(_ []string) ([][]float64, error) {
 			return nil, fmt.Errorf("embedding error")
 		}
 
@@ -242,7 +242,7 @@ func TestListCollections(t *testing.T) {
 	})
 
 	t.Run("empty embeddings", func(t *testing.T) {
-		pipeline.OverrideEmbeddingsAPI = func(_ []string) ([][]float64, error) {
+		pipeline.EmbeddingFn = func(_ []string) ([][]float64, error) {
 			return [][]float64{}, nil
 		}
 
@@ -254,7 +254,7 @@ func TestListCollections(t *testing.T) {
 	})
 
 	t.Run("http post fails", func(t *testing.T) {
-		pipeline.OverrideEmbeddingsAPI = func(_ []string) ([][]float64, error) {
+		pipeline.EmbeddingFn = func(_ []string) ([][]float64, error) {
 			return [][]float64{{0.1}}, nil
 		}
 
@@ -273,7 +273,7 @@ func TestListCollections(t *testing.T) {
 	})
 
 	t.Run("http returns error status", func(t *testing.T) {
-		pipeline.OverrideEmbeddingsAPI = func(_ []string) ([][]float64, error) {
+		pipeline.EmbeddingFn = func(_ []string) ([][]float64, error) {
 			return [][]float64{{0.1}}, nil
 		}
 
@@ -298,7 +298,7 @@ func TestListCollections(t *testing.T) {
 	})
 
 	t.Run("invalid JSON response", func(t *testing.T) {
-		pipeline.OverrideEmbeddingsAPI = func(_ []string) ([][]float64, error) {
+		pipeline.EmbeddingFn = func(_ []string) ([][]float64, error) {
 			return [][]float64{{0.1}}, nil
 		}
 

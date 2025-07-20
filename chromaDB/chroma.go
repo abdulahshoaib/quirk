@@ -146,7 +146,7 @@ func ListCollections(req ReqParams, query_text []string) (int, error, *ChromaQue
 	)
 
 	//for test
-	query_embeddings, err := pipeline.OverrideEmbeddingsAPI(query_text)
+	query_embeddings, err := pipeline.EmbeddingFn(query_text)
 	slog.Debug("query embeddings", slog.Any("query_text", query_text), slog.Any("embedding_dim", len(query_embeddings)))
 
 	//for production

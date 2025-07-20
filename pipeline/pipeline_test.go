@@ -33,7 +33,9 @@ type captureResult struct {
 
 func TestProcessFiles(t *testing.T) {
 	// override API
-	OverrideEmbeddingsAPI = mockEmbeddingsAPI
+	original := EmbeddingFn
+	defer func() { EmbeddingFn = original }()
+	EmbeddingFn = mockEmbeddingsAPI
 
 	memFiles := map[string][]byte{
 		"file1.txt": []byte("Hello, this is test 1.\nIt's a file."),
@@ -41,7 +43,6 @@ func TestProcessFiles(t *testing.T) {
 	}
 
 	var captured captureResult
-
 	writeBack := func(object_id string, embeddings [][]float64, triples []string) {
 		captured = captureResult{object_id, embeddings, triples}
 	}
@@ -56,7 +57,6 @@ func TestProcessFiles(t *testing.T) {
 		{0.1, 0.2, 0.3},
 		{0.4, 0.5, 0.6},
 	}
-
 	if !reflect.DeepEqual(captured.embeddings, expectedEmbeddings) {
 		t.Errorf("Embeddings mismatch.\nExpected: %v\nGot: %v", expectedEmbeddings, captured.embeddings)
 	}

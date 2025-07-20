@@ -3,13 +3,23 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	chromadb "github.com/abdulahshoaib/quirk/chromaDB"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	chromadb "github.com/abdulahshoaib/quirk/chromaDB"
+	"github.com/jarcoal/httpmock"
 )
 
 func TestHandleExportToChroma_AddSuccess(t *testing.T) {
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+
+	// Mock the outgoing ChromaDB POST request
+	httpmock.RegisterResponder("POST", "http://localhost:8001/api/v2/tenants/quirk/databases/quirk/collections/afaa5b03-e179-4afd-bc7a-6948daf7056b/add",
+		httpmock.NewStringResponder(200, `{"message": "success"}`))
+
+	// Prepare mock jobResults
 	id := "test_id"
 	embedding := make([]float64, 1024)
 	for i := range embedding {
@@ -20,7 +30,9 @@ func TestHandleExportToChroma_AddSuccess(t *testing.T) {
 		Filenames:   []string{"file1"},
 		Filecontent: []string{"This is the file content"},
 	}
+	defer delete(jobResults, id)
 
+	// Prepare request
 	body := struct {
 		Req     chromadb.ReqParams `json:"req"`
 		Payload chromadb.Payload   `json:"payload"`
@@ -30,21 +42,21 @@ func TestHandleExportToChroma_AddSuccess(t *testing.T) {
 			Port:          8001,
 			Tenant:        "quirk",
 			Database:      "quirk",
-			Collection_id: "53fe1c09-3202-482a-bbe5-590cbd7ba0cc",
+			Collection_id: "afaa5b03-e179-4afd-bc7a-6948daf7056b",
 		},
 		Payload: chromadb.Payload{},
 	}
 	bodyBytes, _ := json.Marshal(body)
-
 	req := httptest.NewRequest(http.MethodPost, "/export?object_id="+id+"&operation=add", bytes.NewReader(bodyBytes))
 	req.Header.Set("Content-Type", "application/json")
-
 	w := httptest.NewRecorder()
+
+	// Call handler
 	HandleExportToChroma(w, req)
 
 	resp := w.Result()
 	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 OK, got %d", resp.StatusCode)
+		t.Fatalf("expected 200 OK, got %d", resp.StatusCode)
 	}
 }
 
