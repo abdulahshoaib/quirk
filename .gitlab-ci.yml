@@ -1,0 +1,10 @@
+image: golang:1.24
+
+stages:
+  - test
+
+test:
+  tags:
+    - docker
+  script:
+    - go test ./...
