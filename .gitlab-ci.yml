@@ -5,6 +5,6 @@ stages:
 
 test:
   tags:
-    - docker
+    - quirk
   script:
     - go test ./...
