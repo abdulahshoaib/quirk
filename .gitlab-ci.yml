@@ -1,0 +1,17 @@
+stages:
+  - test
+  - build
+
+variables:
+  GO_VER: "1.24"
+
+before_script:
+  - docker info
+
+test:
+  stage: test
+  image: golang:$GO_VER
+  script:
+    - go mod download
+    - go test ./...
+    - go vet ./...
